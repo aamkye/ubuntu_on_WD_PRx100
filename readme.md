@@ -2,6 +2,25 @@
 
 _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix power._
 
+## TOC
+* [Overview:](#overview)
+* [Supported devices](#supported-devices)
+* [Requirements:](#requirements)
+* [Preparation](#preparation)
+  * [Common](#common)
+  * [Ubuntu](#ubuntu)
+  * [MacOS](#macos)
+* [Download the Ubuntu 21.04 server iso](#download-the-ubuntu-2104-server-iso)
+* [Main process](#main-process)
+* [Post installation](#post-installation)
+  * [Networking dynamic](#networking-dynamic)
+* [Extras](#extras)
+  * [Hardware Control](#hardware-control)
+  * [Wiping old data (migration from existing cloudOS)](#wiping-old-data-migration-from-existing-cloudos)
+  * [Create a new ZFS array](#create-a-new-zfs-array)
+  * [Disable internal flash memory](#disable-internal-flash-memory)
+  * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
+
 ---
 ## Overview:
 
@@ -17,6 +36,13 @@ Links:
 * https://wiki.archlinux.org/title/ZFS/Virtual_disks
 * https://linuxhint.com/zfs-concepts-and-tutorial
 * https://ubuntu.com/tutorials/setup-zfs-storage-pool#1-overview
+
+---
+## Supported devices
+* WD PR2100
+* WD PR4100
+
+**WD DL2100 and WD DL4100 are not supported because of ARM CPU**
 
 ---
 ## Requirements:
