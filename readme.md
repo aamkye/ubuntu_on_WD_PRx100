@@ -355,10 +355,11 @@ sudo update-initramfs -u
 ---
 ## Hackish way to obtain MACADDRESSES
 
-* run Ubuntu on NAS without `netplan` config
+* run Ubuntu Server from pendrive on NAS without `netplan` config
 * wait ~5min since boot
-* unplug from NAS; plug into PC/MAC
-* run `sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G`
+* unplug pendrive from NAS; plug pendrive into PC/MAC
+* run Ubuntu Server via `kvm`:
+  * `sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G`
 * run `journalctl | grep "ci-info" | less`:
 
 ```
@@ -377,3 +378,8 @@ sudo update-initramfs -u
 <date> <hostname> cloud-init[1279]: ci-info: +-------+-------------+---------+-----------+-------+
 <date> <hostname> cloud-init[1279]: ci-info: +-------+-------------+---------+-----------+-------+
 ```
+
+* there might be a few more blocks like that, but `Hw-Address` contains values that we are looking for
+
+for some reason default config renames `eno2` to `eth1` and tries to do the same with `eno1`; our netplan config fixes that issue
+
