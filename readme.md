@@ -1,4 +1,4 @@
-# Setting up Ubuntu Server 21.04 on WD PR4100
+# Setting up Ubuntu Server 21.04 on WD PRx100
 
 _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix power._
 
@@ -19,7 +19,7 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
   * [Wiping old data (migration from existing cloudOS)](#wiping-old-data-migration-from-existing-cloudos)
   * [Create a new ZFS array](#create-a-new-zfs-array)
   * [Disable internal flash memory](#disable-internal-flash-memory)
-  * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
+* [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
 
 ---
 ## Overview:
@@ -49,7 +49,6 @@ Links:
 
 * `KVM`/`QEMU`
 * USB flash drive (8GB+)
-* WD My Cloud PR2100/PR4100
 * `brew` (macos only)
 
 ---
@@ -123,11 +122,11 @@ sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G
 ```
 
 ---
-## Post installation
+## Post installation (while `kvm` is still running)
 
 ### Networking dynamic
 
-Ubuntu is now installed for a virtual network interface with the new udev persistent networking naming.
+Ubuntu is now installed for a virtual network interface with the new `udev` persistent networking naming.
 
 ```
 ip addr show
@@ -205,7 +204,7 @@ and plug the USB drive in the PR4100 NAS.
 **Boot up and enjoy!**
 
 ---
-## Extras
+## Extras (meant to be run on NAS)
 
 ### Hardware Control
 
@@ -354,7 +353,7 @@ sudo update-initramfs -u
 ```
 
 ---
-### Hackish way to obtain MACADDRESSES
+## Hackish way to obtain MACADDRESSES
 
 * run Ubuntu on NAS without `netplan` config
 * wait ~5min since boot
