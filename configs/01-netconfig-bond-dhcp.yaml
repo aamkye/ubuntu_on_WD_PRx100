@@ -1,0 +1,21 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eno1:
+      match:
+        macaddress: <mac1>
+      dhcp4: no
+      set-name: eno1
+    eno2:
+      match:
+        macaddress: <mac2>
+      dhcp4: no
+      set-name: eno2
+  bonds:
+    bond0:
+      interfaces: [eno1, eno2]
+      dhcp4: yes
+      parameters:
+        mode: 802.3ad
+        mii-monitor-interval: 1
