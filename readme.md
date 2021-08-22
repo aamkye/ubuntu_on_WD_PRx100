@@ -2,7 +2,7 @@
 
 _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix power._
 
-[![](https://icdn7.digitaltrends.com/image/anthonythurston-wd-pr4100-digitaltrends-883360-640x640.jpg?ver=1)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
+[![WD PR4100](https://icdn7.digitaltrends.com/image/anthonythurston-wd-pr4100-digitaltrends-883360-640x640.jpg?ver=1)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
 
 ## TOC
 
@@ -33,11 +33,11 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 [Original](https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786) article was not covering all topics important for me so I had to do some reverse engineering and add some tweaks.
 
-This tutorial covers how to install Ubuntu Server *(21.04 in my case)* on WD PR4100 or PR2100.
+This tutorial covers how to install Ubuntu Server on WD PR4100 or PR2100.
 
 It goes from preparation, downloading required packages, running installation, initial configuration and extras that most likely are intended to be used.
 
-The whole process can be accomplished on any linux-like system equipped with KVM.
+The whole process can be accomplished on any linux-like system equipped with `KVM`.
 
 Links:
 
@@ -269,8 +269,6 @@ sdc            8:32   0  1.8T  0 disk
 sdd            8:48   0  1.8T  0 disk
 ...
 ```
-
-
 
 ---
 
