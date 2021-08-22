@@ -5,29 +5,31 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 [![](https://icdn7.digitaltrends.com/image/anthonythurston-wd-pr4100-digitaltrends-883360-640x640.jpg?ver=1)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
 
 ## TOC
+
 * [Setting up Ubuntu Server on WD PRx100](#setting-up-ubuntu-server-on-wd-prx100)
-   * [TOC](#toc)
-   * [Overview:](#overview)
-   * [Supported devices](#supported-devices)
-   * [Requirements:](#requirements)
-   * [Preparation](#preparation)
-      * [Common](#common)
-      * [Ubuntu](#ubuntu)
-      * [MacOS (native M1 not supported)](#macos-native-m1-not-supported)
-   * [Download the Ubuntu Server *.iso](#download-the-ubuntu-server-iso)
-   * [Main process](#main-process)
-   * [Post installation (while kvm is still running)](#post-installation-while-kvm-is-still-running)
-      * [Networking dynamic](#networking-dynamic)
-   * [Extras (meant to be run on NAS directly)](#extras-meant-to-be-run-on-nas-directly)
-      * [Hardware Control](#hardware-control)
-      * [Wiping old data (optional overwriting existing cloudOS)](#wiping-old-data-optional-overwriting-existing-cloudos)
-      * [Create a new ZFS array](#create-a-new-zfs-array)
-      * [Disable internal flash memory](#disable-internal-flash-memory)
-   * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
-   * [Remarks](#remarks)
+  * [TOC](#toc)
+  * [Overview:](#overview)
+  * [Supported devices](#supported-devices)
+  * [Requirements:](#requirements)
+  * [Preparation](#preparation)
+    * [Common](#common)
+    * [Ubuntu](#ubuntu)
+    * [MacOS (native M1 not supported)](#macos-native-m1-not-supported)
+  * [Download the Ubuntu Server *.iso](#download-the-ubuntu-server-iso)
+  * [Main process](#main-process)
+  * [Post installation (while kvm is still running)](#post-installation-while-kvm-is-still-running)
+    * [Networking dynamic](#networking-dynamic)
+  * [Extras (meant to be run on NAS directly)](#extras-meant-to-be-run-on-nas-directly)
+    * [Hardware Control](#hardware-control)
+    * [Wiping old data (optional overwriting existing cloudOS)](#wiping-old-data-optional-overwriting-existing-cloudos)
+    * [Create a new ZFS array](#create-a-new-zfs-array)
+    * [Disable internal flash memory](#disable-internal-flash-memory)
+  * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
+  * [Remarks](#remarks)
 
 ---
-## Overview:
+
+## Overview
 
 [Original](https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786) article was not covering all topics important for me so I had to do some reverse engineering and add some tweaks.
 
@@ -38,31 +40,36 @@ It goes from preparation, downloading required packages, running installation, i
 The whole process can be accomplished on any linux-like system equipped with KVM.
 
 Links:
-* https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786
-* https://packages.debian.org/bullseye/all/ovmf/download
-* https://netplan.io
-* https://github.com/michaelroland
-* https://community.wd.com/u/dswv42
-* https://github.com/WDCommunity/wdnas-hwtools
-* https://wiki.archlinux.org/title/ZFS/Virtual_disks
-* https://linuxhint.com/zfs-concepts-and-tutorial
-* https://ubuntu.com/tutorials/setup-zfs-storage-pool#1-overview
+
+* <https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786>
+* <https://packages.debian.org/bullseye/all/ovmf/download>
+* <https://netplan.io>
+* <https://github.com/michaelroland>
+* <https://community.wd.com/u/dswv42>
+* <https://github.com/WDCommunity/wdnas-hwtools>
+* <https://wiki.archlinux.org/title/ZFS/Virtual_disks>
+* <https://linuxhint.com/zfs-concepts-and-tutorial>
+* <https://ubuntu.com/tutorials/setup-zfs-storage-pool#1-overview>
 
 ---
+
 ## Supported devices
+
 * **WD PR2100**
 * **WD PR4100**
 
 **WD DL2100** and **WD DL4100** are not supported because of ARM architecture.
 
 ---
-## Requirements:
+
+## Requirements
 
 * `KVM`/`QEMU`
 * USB flash drive (8GB+)
 * `brew` (macos only)
 
 ---
+
 ## Preparation
 
 ### Common
@@ -98,12 +105,15 @@ mv usr/share/OVMF/OVMF.fd bios.bin
 # compatibility alias
 alias kvm="qemu-system-x86_64"
 ```
+
 ---
+
 ## Download the Ubuntu Server `*.iso`
 
 Download chosen iso from [here](https://ubuntu.com/download/server).
 
 ---
+
 ## Main process
 
 Find out the name of your USB flash drive with `lsblk`.
@@ -135,6 +145,7 @@ sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G
 ```
 
 ---
+
 ## Post installation (while `kvm` is still running)
 
 ### Networking dynamic
@@ -204,7 +215,7 @@ network:
 
 Static IP config should be easy too.
 
-_More info (static IP, bonding, etc) on https://netplan.io._
+_More info (static IP, bonding, etc) on <https://netplan.io>._
 
 The Ubuntu boot disk is now ready. Shutdown with
 
@@ -217,6 +228,7 @@ and plug the USB drive in the NAS.
 **Boot up and enjoy!**
 
 ---
+
 ## Extras (meant to be run on NAS directly)
 
 Now you can SSH to your NAS and start installing extras
@@ -240,6 +252,7 @@ sudo ./install.sh
 ```
 
 ---
+
 ### Wiping old data (optional overwriting existing cloudOS)
 
 Old RAID data could be stored on HDDs so you need to wipe them out.
@@ -269,6 +282,7 @@ sudo reboot
 ```
 
 ---
+
 ### Create a new ZFS array
 
 [Here's](https://wiki.archlinux.org/title/ZFS/Virtual_disks) a great overview on the core features of ZFS, also [this](https://linuxhint.com/zfs-concepts-and-tutorial/) might help.
@@ -307,7 +321,6 @@ Or alternatively, create a `raidz2` pool over 4 disks.
 
 This is similar to a `RAID6` pool, using 2 disk for parity.
 
-
 ```bash
 sudo zpool create media raidz2 sda sdb sdc sdd
 ```
@@ -342,6 +355,7 @@ sudo zpool import
 Follow the instructions.
 
 ---
+
 ### Disable internal flash memory
 
 If the internal flash memory is completely broken, you may be unable to restore the original WD OS.
@@ -367,6 +381,7 @@ sudo update-initramfs -u
 ```
 
 ---
+
 ## Hackish way to obtain MACADDRESSES
 
 * run Ubuntu Server from pendrive on NAS without `netplan` config
@@ -400,3 +415,4 @@ for some reason default config renames `eno2` to `eth1` and tries to do the same
 ## Remarks
 
 * TOC created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc).
+* Linted by [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli)
