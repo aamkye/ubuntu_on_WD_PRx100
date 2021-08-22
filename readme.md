@@ -1,32 +1,41 @@
-# Setting up Ubuntu Server 21.04 on WD PRx100
+# Setting up Ubuntu Server on WD PRx100
 
 _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix power._
 
 [![](https://icdn7.digitaltrends.com/image/anthonythurston-wd-pr4100-digitaltrends-883360-640x640.jpg?ver=1)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
 
 ## TOC
-* [Overview:](#overview)
-* [Supported devices](#supported-devices)
-* [Requirements:](#requirements)
-* [Preparation](#preparation)
-  * [Common](#common)
-  * [Ubuntu](#ubuntu)
-  * [MacOS](#macos)
-* [Download the Ubuntu 21.04 server iso](#download-the-ubuntu-2104-server-iso)
-* [Main process](#main-process)
-* [Post installation](#post-installation)
-  * [Networking dynamic](#networking-dynamic)
-* [Extras](#extras)
-  * [Hardware Control](#hardware-control)
-  * [Wiping old data (migration from existing cloudOS)](#wiping-old-data-migration-from-existing-cloudos)
-  * [Create a new ZFS array](#create-a-new-zfs-array)
-  * [Disable internal flash memory](#disable-internal-flash-memory)
-* [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
+* [Setting up Ubuntu Server on WD PRx100](#setting-up-ubuntu-server-on-wd-prx100)
+   * [TOC](#toc)
+   * [Overview:](#overview)
+   * [Supported devices](#supported-devices)
+   * [Requirements:](#requirements)
+   * [Preparation](#preparation)
+      * [Common](#common)
+      * [Ubuntu](#ubuntu)
+      * [MacOS (native M1 not supported)](#macos-native-m1-not-supported)
+   * [Download the Ubuntu Server *.iso](#download-the-ubuntu-server-iso)
+   * [Main process](#main-process)
+   * [Post installation (while kvm is still running)](#post-installation-while-kvm-is-still-running)
+      * [Networking dynamic](#networking-dynamic)
+   * [Extras (meant to be run on NAS directly)](#extras-meant-to-be-run-on-nas-directly)
+      * [Hardware Control](#hardware-control)
+      * [Wiping old data (optional overwriting existing cloudOS)](#wiping-old-data-optional-overwriting-existing-cloudos)
+      * [Create a new ZFS array](#create-a-new-zfs-array)
+      * [Disable internal flash memory](#disable-internal-flash-memory)
+   * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
+   * [Remarks](#remarks)
 
 ---
 ## Overview:
 
-[Original](https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786) article was not covering all topics important for me so I had to do some reverse engeenering.
+[Original](https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786) article was not covering all topics important for me so I had to do some reverse engineering and add some tweaks.
+
+This tutorial covers how to install Ubuntu Server *(21.04 in my case)* on WD PR4100 or PR2100.
+
+It goes from preparation, downloading required packages, running installation, initial configuration and extras that most likely are intended to be used.
+
+The whole process can be accomplished on any linux-like system equipped with KVM.
 
 Links:
 * https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786
@@ -41,10 +50,10 @@ Links:
 
 ---
 ## Supported devices
-* WD PR2100
-* WD PR4100
+* **WD PR2100**
+* **WD PR4100**
 
-**WD DL2100 and WD DL4100 are not supported because of ARM CPU**
+**WD DL2100** and **WD DL4100** are not supported because of ARM architecture.
 
 ---
 ## Requirements:
@@ -72,7 +81,7 @@ sudo apt install qemu-kvm ovmf
 cp /usr/share/ovmf/OVMF.fd bios.bin
 ```
 
-### MacOS
+### MacOS (native M1 not supported)
 
 ```bash
 brew install qemu
@@ -90,18 +99,20 @@ mv usr/share/OVMF/OVMF.fd bios.bin
 alias kvm="qemu-system-x86_64"
 ```
 ---
-## Download the Ubuntu 21.04 server iso
+## Download the Ubuntu Server `*.iso`
 
-Download iso from [here](https://ubuntu.com/download/server).
+Download chosen iso from [here](https://ubuntu.com/download/server).
 
 ---
 ## Main process
 
-Find out the name of your USB flash drive with `lsblk`. I'll use `/dev/sdX` here.
+Find out the name of your USB flash drive with `lsblk`.
+
+**I'll use `/dev/sdX` here.**
 
 Boot the iso installer.
 
-```
+```bash
 sudo kvm -bios ./bios.bin -L . -cdrom <path_to_iso> -drive format=raw,file=/dev/sdX -boot once=d -m 1G
 ```
 
@@ -119,7 +130,7 @@ Then boot without cdrom straight from the USB flash drive.
 
 Login in the virtual machine and update packages if you like.
 
-```
+```bash
 sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G
 ```
 
@@ -130,7 +141,7 @@ sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G
 
 Ubuntu is now installed for a virtual network interface with the new `udev` persistent networking naming.
 
-```
+```bash
 ip addr show
 ```
 
@@ -161,7 +172,7 @@ network:
       set-name: eno2
 ```
 
-_MACADDRESSES could be found on device or on the box, however there is hackish way in EXTRAS at the very end_
+_MACADDRESSES could be found on device or on the box, however there is hackish way in [EXTRAS](#hackish-way-to-obtain-macaddresses) at the very end_
 
 This causes the NAS to get a dynamic IPv4 address on both of its onboard `eno` interfaces.
 
@@ -201,12 +212,14 @@ The Ubuntu boot disk is now ready. Shutdown with
 sudo halt -p
 ```
 
-and plug the USB drive in the PR4100 NAS.
+and plug the USB drive in the NAS.
 
 **Boot up and enjoy!**
 
 ---
-## Extras (meant to be run on NAS)
+## Extras (meant to be run on NAS directly)
+
+Now you can SSH to your NAS and start installing extras
 
 ### Hardware Control
 
@@ -220,13 +233,14 @@ You need some packages from the `universe` repo.
 
 ```bash
 sudo add-apt-repository universe
+cd /opt
 git clone https://github.com/WDCommunity/wdnas-hwtools
-cd wdnas-hwtools
+cd /opt/wdnas-hwtools
 sudo ./install.sh
 ```
 
 ---
-### Wiping old data (migration from existing cloudOS)
+### Wiping old data (optional overwriting existing cloudOS)
 
 Old RAID data could be stored on HDDs so you need to wipe them out.
 
@@ -242,7 +256,7 @@ sdd            8:48   0  1.8T  0 disk
 ...
 ```
 
-**WARNING THIS STEP IS IRREVERSABLE, PROCEED AT YOUR OWN RISK**
+**WARNING THIS STEP IS IRREVERSIBLE, PROCEED AT YOUR OWN RISK**
 
 ```bash
 # For each disk
@@ -264,6 +278,7 @@ Now let's create a `ZFS` array on the `PRx100`.
 Insert your disks (hotplug is allowed). List them.
 
 ```bash
+# Get disk info
 $ lsblk -d
 NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
 ...
@@ -271,13 +286,10 @@ sda            8:0    0  1.8T  0 disk
 sdb            8:16   0  1.8T  0 disk
 sdc            8:32   0  1.8T  0 disk
 sdd            8:48   0  1.8T  0 disk
-sde            8:64   1 14.3G  0 disk
 ...
 ```
 
-Here we see sde is the USB boot disk.
-
-Create a mirror pool over sda and sdbbased on the [Ubuntu Tutorial](https://ubuntu.com/tutorials/setup-zfs-storage-pool#1-overview).
+Create a mirror pool over `sda` and `sdb` based on the [Ubuntu Tutorial](https://ubuntu.com/tutorials/setup-zfs-storage-pool#1-overview).
 
 ```bash
 sudo zpool create media mirror sda sdb
@@ -322,7 +334,7 @@ sudo mdadm --assemble --scan
 
 or if you used my FreeNAS image to create a `ZFS` array
 
-```
+```bash
 sudo apt install zfsutils-linux
 sudo zpool import
 ```
@@ -332,14 +344,14 @@ Follow the instructions.
 ---
 ### Disable internal flash memory
 
-If the internal flash memory is completely broken, you may be unable to restore the origal WD OS.
+If the internal flash memory is completely broken, you may be unable to restore the original WD OS.
 
-Installing Ubuntu is a solution, but you'll see system freezes when polling the disks in the dmesg output.
+Installing Ubuntu is a solution, but you'll see system freezes when polling the disks in the `dmesg` output.
 
 A solution is to blacklist the `mmc_block` driver.
 
 ```bash
-sudo editor /etc/modprobe.d/blacklist.conf
+sudo <editor> /etc/modprobe.d/blacklist.conf
 ```
 
 Add a line with
@@ -364,7 +376,7 @@ sudo update-initramfs -u
   * `sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/sdX -m 1G`
 * run `journalctl | grep "ci-info" | less`:
 
-```
+```bash
 <date> <hostname> cloud-init[1279]: ci-info: +++++++++++++++++++++++++++Net device info++++++++++++++++++++++++++++
 <date> <hostname> cloud-init[1279]: ci-info: +--------+-------+-----------+-----------+-------+-------------------+
 <date> <hostname> cloud-init[1279]: ci-info: | Device |   Up  |  Address  |    Mask   | Scope |     Hw-Address    |
@@ -385,3 +397,6 @@ sudo update-initramfs -u
 
 for some reason default config renames `eno2` to `eth1` and tries to do the same with `eno1`; our netplan config fixes that issue
 
+## Remarks
+
+* TOC created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc).
