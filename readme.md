@@ -108,7 +108,7 @@ alias kvm="qemu-system-x86_64"
 
 ---
 
-## Download the Ubuntu Server `*.iso`
+## Download the Ubuntu Server
 
 Download chosen iso from [here](https://ubuntu.com/download/server).
 
