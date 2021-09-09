@@ -1,5 +1,6 @@
 - name: Extend filesystem
   become: true
   shell: |
+    parted {{ usb_drive }} resizepart {{ usb_drive_partition }} 100%
     lvresize -l +100%FREE $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
     resize2fs $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
