@@ -1,0 +1,19 @@
+- name: All in one playbook
+  hosts: "{{ target | default('None') }}"
+  vars_files:
+    - vars/docker.yml
+    - vars/main.yml
+    - vars/packer.yml
+    - vars/zfs.yml
+  roles:
+    - { role: hardware_control }
+    - { role: internal_memory }
+
+    - { role: lvm }
+
+    - { role: bashrc }
+    - { role: user }
+
+    - { role: zfs }
+
+    - { role: docker }

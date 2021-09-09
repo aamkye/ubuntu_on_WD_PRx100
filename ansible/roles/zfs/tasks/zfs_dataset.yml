@@ -1,0 +1,51 @@
+- name: Check ZFS pool existance
+  command: zfs list -Ho name {{ item['name'] }}
+  register: result_dataset_list
+  ignore_errors: true
+  changed_when: false
+
+- name: Create password file
+  ansible.builtin.lineinfile:
+    path: /tmp/key.txt
+    line: "{{ zfs_dataset_pass }}"
+    create: true
+  when:
+    - item['state'] | default('present') == 'present'
+    - result_dataset_list.rc == 1
+
+- name: Setup ZFS dataset with encryption
+  become: true
+  shell: >-
+    zfs create
+    {{ '-o' if item['options'] else '' }} {{ item['options'] | join(' -o ') }}
+    {{ item['name'] }}
+  when:
+    - item['state'] | default('present') == 'present'
+    - result_dataset_list.rc == 1
+
+- name: Change dataset file permission
+  become: true
+  file:
+    path: /{{ item['name'] }}
+    owner: "{{ username }}"
+    group: "{{ username }}"
+  when:
+    - item['state'] | default('present') == 'present'
+
+- name: Remove password file
+  ansible.builtin.file:
+    path: /tmp/key.txt
+    state: absent
+  when:
+    - item['state'] | default('present') == 'present'
+    - result_dataset_list.rc == 1
+
+- name: Remove ZFS dataset
+  become: true
+  shell: |
+    zfs unmount -f {{ item['name'] }}
+    zfs destroy -f {{ item['name'] }}
+  when:
+    - item['state'] | default('present') == 'absent'
+    - result_dataset_list.rc == 0
+

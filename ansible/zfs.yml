@@ -1,0 +1,8 @@
+- name: Setup ZFS
+  hosts: "{{ target | default('None') }}"
+  vars_files:
+    - vars/main.yml
+    - vars/packer.yml
+    - vars/zfs.yml
+  roles:
+    - { role: zfs }

@@ -8,7 +8,8 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 * [Setting up Ubuntu Server on WD PRx100](#setting-up-ubuntu-server-on-wd-prx100)
   * [TOC](#toc)
-  * [Overview:](#overview)
+  * [Overview](#overview)
+    * [Links](#links)
   * [Supported devices](#supported-devices)
   * [Requirements:](#requirements)
   * [Preparation](#preparation)
@@ -21,11 +22,24 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
     * [Networking dynamic](#networking-dynamic)
   * [Extras (meant to be run on NAS directly)](#extras-meant-to-be-run-on-nas-directly)
     * [Hardware Control](#hardware-control)
-    * [Wiping old data (optional overwriting existing cloudOS)](#wiping-old-data-optional-overwriting-existing-cloudos)
     * [Create a new ZFS array](#create-a-new-zfs-array)
+    * [ZFS native encryption](#zfs-native-encryption)
     * [Disable internal flash memory](#disable-internal-flash-memory)
   * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
   * [Remarks](#remarks)
+
+---
+
+## PR4100 Spec
+
+```
+* Release date: 2016
+* CPU: Intel Pentium N3710 quad-core @ 1.6 GHz
+* RAM: 4 GB DDR3
+* USB: 3 x 3.0 ports
+* Bays: 4 x 3.5" SATA III
+* LAN: 2 x 1 Gbit/s Ethernet
+```
 
 ---
 
@@ -39,7 +53,11 @@ It goes from preparation, downloading required packages, running installation, i
 
 The whole process can be accomplished on any linux-like system equipped with `KVM`.
 
-Links:
+### Ansible automation
+
+There is [ansible](./ansible) folder with automatization of a few steps from [extras](#extras-meant-to-be-run-on-nas-directly) and [config](./config) folder containing netplan configs for KVM stage.
+
+### Links:
 
 * <https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786>
 * <https://packages.debian.org/bullseye/all/ovmf/download>
@@ -50,6 +68,8 @@ Links:
 * <https://wiki.archlinux.org/title/ZFS/Virtual_disks>
 * <https://linuxhint.com/zfs-concepts-and-tutorial>
 * <https://ubuntu.com/tutorials/setup-zfs-storage-pool#1-overview>
+* <https://arstechnica.com/gadgets/2021/06/a-quick-start-guide-to-openzfs-native-encryption/>
+* <https://www.theurbanpenguin.com/creating-zfs-data-sets-and-compression/>
 
 ---
 
@@ -67,6 +87,7 @@ Links:
 * `KVM`/`QEMU`
 * USB flash drive (8GB+)
 * `brew` (macos only)
+* `pv`
 
 ---
 
@@ -92,6 +113,7 @@ cp /usr/share/ovmf/OVMF.fd bios.bin
 
 ```bash
 brew install qemu
+brew install gtk+
 
 # Get the OVMF debian package 6
 # https://packages.debian.org/bullseye/all/ovmf/download
@@ -255,23 +277,6 @@ sudo ./install.sh
 
 ---
 
-### Wiping old data (optional overwriting existing cloudOS)
-
-Old RAID data could be stored on HDDs so you need to wipe them out.
-
-```bash
-$ lsblk -d
-NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-...
-sda            8:0    0  1.8T  0 disk
-sdb            8:16   0  1.8T  0 disk
-sdc            8:32   0  1.8T  0 disk
-sdd            8:48   0  1.8T  0 disk
-...
-```
-
----
-
 ### Create a new ZFS array
 
 [Here's](https://wiki.archlinux.org/title/ZFS/Virtual_disks) a great overview on the core features of ZFS, also [this](https://linuxhint.com/zfs-concepts-and-tutorial/) might help.
@@ -344,11 +349,26 @@ sudo zfs create media/pictures
 or if you used my FreeNAS image to create a `ZFS` array
 
 ```bash
-sudo apt install zfsutils-linux
 sudo zpool import
 ```
 
 Follow the instructions.
+
+### ZFS native encryption
+
+Additionally you can setup encryption on dataset.
+
+```bash
+sudo zfs create -o encryption=aes-256-gcm -o keylocation=prompt -o keyformat=passphrase media/pictures
+```
+
+After reboot:
+
+```bash
+sudo zfs mount -a
+```
+
+More info [here](https://arstechnica.com/gadgets/2021/06/a-quick-start-guide-to-openzfs-native-encryption/>).
 
 ---
 

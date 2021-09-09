@@ -1,0 +1,57 @@
+#cloud-config
+autoinstall:
+  version: 1
+  interactive-sections: []
+  locale: en_US.UTF-8
+  keyboard:
+    layout: en
+    variant: us
+  refresh-installer:
+    update: false
+  apt:
+    geoip: true
+    preserve_sources_list: false
+  network:
+    network:
+      version: 2
+      renderer: networkd
+      ethernets:
+        ens3:
+          dhcp4: true
+        eno1:
+          match:
+            macaddress: {{ macaddress[0] }}
+          dhcp4: false
+          set-name: eno1
+        eno2:
+          match:
+            macaddress: {{ macaddress[1] }}
+          dhcp4: false
+          set-name: eno2
+      bonds:
+        bond0:
+          interfaces: [eno1, eno2]
+          dhcp4: true
+          dhcp-identifier: mac
+          parameters:
+            mode: 802.3ad
+            mii-monitor-interval: 1
+  storage:
+    layout:
+      name: lvm
+    grub:
+      reorder_uefi: False
+  identity:
+    hostname: {{ hostname }}
+    username: {{ username }}
+    password: {{ password | password_hash('sha256')}}
+  ssh:
+    install-server: true
+    authorized-keys: {{ authorized_keys | from_yaml }}
+    allow-pw: no
+  user-data:
+    disable_root: false
+  late-commands:
+    - echo '{{ username }} ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/{{ username }}
+    - chmod 440 /target/etc/sudoers.d/{{ username }}
+

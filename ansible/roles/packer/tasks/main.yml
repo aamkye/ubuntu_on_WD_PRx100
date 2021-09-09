@@ -1,0 +1,5 @@
+- include_tasks: packer_prepare.yml
+
+- include_tasks: packer_build.yml
+
+- include_tasks: packer_post_build.yml

@@ -1,0 +1,40 @@
+- name: "Prepare {{ tmp_dir }} folder"
+  ansible.builtin.file:
+    state: directory
+    path: "{{ tmp_dir }}"
+
+- name: "Prepare subiquity folder"
+  ansible.builtin.file:
+    state: directory
+    path: "{{ tmp_dir }}/subiquity/"
+
+- name: "Prepare iso folder"
+  ansible.builtin.file:
+    state: directory
+    path: "{{ tmp_dir }}/iso/"
+
+- name: "Prepare subiquity user-data"
+  ansible.builtin.template:
+    src: user-data.j2
+    dest: "{{ tmp_dir }}/subiquity/user-data"
+
+- name: "Prepare subiquity meta-data"
+  ansible.builtin.copy:
+    src: meta-data
+    dest: "{{ tmp_dir }}/subiquity/meta-data"
+
+- name: "Prepare pkr.hcl file"
+  ansible.builtin.template:
+    src: ubuntu-server.pkr.hcl.j2
+    dest: "{{ tmp_dir }}/ubuntu-server.pkr.hcl"
+
+- name: "Prepare bios for qemu"
+  ansible.builtin.copy:
+    src: bios.bin
+    dest: "{{ tmp_dir }}/bios.bin"
+
+- name: "Get Ubuntu ISO (http://www.releases.ubuntu.com/{{ ubuntu_version }}/{{ ubuntu_iso }})"
+  ansible.builtin.get_url:
+    url: "http://www.releases.ubuntu.com/{{ ubuntu_version }}/{{ ubuntu_iso }}"
+    dest: "{{ tmp_dir }}/iso/{{ ubuntu_iso }}"
+    checksum: "{{ ubuntu_iso_checksum }}"

@@ -1,0 +1,9 @@
+- name: Disable internal flash memory
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/modprobe.d/blacklist.conf
+    line: blacklist mmc_block
+
+- name: Update initramfs
+  become: true
+  shell: update-initramfs -u

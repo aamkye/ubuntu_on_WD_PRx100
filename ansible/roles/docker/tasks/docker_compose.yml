@@ -1,0 +1,35 @@
+- name: Check current docker-compose version
+  command: docker-compose --version
+  register: docker_compose_current_version
+  changed_when: false
+  failed_when: false
+
+- name: Delete existing docker-compose version if it's different
+  become: True
+  file:
+    path: "{{ docker_compose_path }}"
+    state: absent
+  when: >
+    docker_compose_current_version.stdout is defined
+    and docker_compose_version not in docker_compose_current_version.stdout
+
+- name: Get Docker compose to local
+  become: False
+  run_once: true
+  delegate_to: localhost
+  get_url:
+    url: https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64
+    dest: "{{ tmp_dir }}/docker_compose"
+    mode: 0755
+
+- name: Install Docker Compose to hosts (if configured)
+  become: True
+  copy:
+    src: "{{ tmp_dir }}/docker_compose"
+    dest: "{{ docker_compose_path }}"
+    mode: 0755
+
+- name: Cleanup
+  file:
+    path: "{{ tmp_dir }}/docker_compose"
+    state: absent

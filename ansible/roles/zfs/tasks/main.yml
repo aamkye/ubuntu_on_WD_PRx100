@@ -1,0 +1,7 @@
+- include_tasks: zfs_pre_requirements.yml
+
+- include_tasks: zfs_pool.yml
+  loop: "{{ zfs_pools }}"
+
+- include_tasks: zfs_dataset.yml
+  loop: "{{ zfs_datasets }}"

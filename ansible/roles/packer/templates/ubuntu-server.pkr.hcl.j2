@@ -1,0 +1,44 @@
+source "qemu" "ubuntu-server" {
+  format                  = "raw"
+  accelerator             = "none"
+
+  boot_command           = ["<esc>", "e", "<down><down><down><end> ", "autoinstall ds=nocloud-net", "<f10>"]
+  boot_key_interval       = "5ms"
+  boot_keygroup_interval  = "1s"
+  boot_wait               = "5s"
+
+  iso_checksum            = "{{ ubuntu_iso_checksum }}"
+  iso_urls                = [
+    "iso/{{ ubuntu_iso }}",
+    "http://www.releases.ubuntu.com/{{ ubuntu_version }}/{{ ubuntu_iso }}"
+  ]
+
+  output_directory        = "output"
+
+  vm_name                 = "{{ packer_image_name }}"
+  disk_size               = "3G"
+  memory                  = {{ (ansible_facts.memtotal_mb | int) }}
+  cpus                    = {{ (ansible_facts.processor_vcpus | int) }}
+  firmware                = "bios.bin"
+  display                 = "vnc=0.0.0.0:1"
+  qemuargs                = [
+    ["-no-reboot", ""],
+  ]
+  skip_compaction         = true
+  disk_compression        = false
+
+  cd_files = [
+    "./subiquity/meta-data",
+    "./subiquity/user-data"
+  ]
+  cd_label = "cidata"
+
+  communicator            = "none"
+  shutdown_command        = "shutdown -P now"
+  shutdown_timeout        = "60m"
+}
+
+build {
+  sources = ["source.qemu.ubuntu-server"]
+}
+

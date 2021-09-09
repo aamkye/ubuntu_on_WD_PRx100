@@ -1,0 +1,4 @@
+tmp_dir: ./tmp
+ansible_python_interpreter: /usr/bin/env python3
+ansible_pip_interpreter: /usr/bin/env pip3
+

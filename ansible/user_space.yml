@@ -1,0 +1,8 @@
+- name: Setup userspace
+  hosts: "{{ target | default('None') }}"
+  vars_files:
+    - vars/main.yml
+    - vars/packer.yml
+  roles:
+    - { role: bashrc }
+    - { role: user }

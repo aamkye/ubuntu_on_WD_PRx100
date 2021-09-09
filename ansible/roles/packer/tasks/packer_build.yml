@@ -1,0 +1,12 @@
+- name: "Packer run (may take some time; progress: vnc://127.0.0.1:5900)"
+  ignore_errors: true
+  become: true
+  register: packer
+  args:
+    chdir: "{{ tmp_dir }}"
+    creates: "{{ tmp_dir }}/output/{{ packer_image_name_raw }}"
+  shell:
+    packer build .
+
+- name: "Packer output"
+  debug: var=packer.stdout

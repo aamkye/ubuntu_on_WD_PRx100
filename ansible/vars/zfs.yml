@@ -1,0 +1,27 @@
+zfs_pools:
+  - name: nas
+    state: present
+    mode: raidz2
+    devices:
+      - /dev/sda
+      - /dev/sdb
+      - /dev/sdc
+      - /dev/sdd
+    options:
+      - "autoexpand=on"
+      - "autoreplace=on"
+      - "delegation=on"
+      - "dedupditto=1.5"
+      - "failmode=continue"
+      - "listsnaps=on"
+
+zfs_datasets:
+  - name: nas/data
+    state: present
+    options:
+      - "encryption=aes-256-gcm"
+      - "keyformat=passphrase"
+      - "keylocation=file:///tmp/key.txt"
+      - "compression=lzjb"
+
+zfs_dataset_pass: Admin1234

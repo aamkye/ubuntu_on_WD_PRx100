@@ -1,0 +1,7 @@
+- name: Extend LVM
+  hosts: "{{ target | default('None') }}"
+  vars_files:
+    - vars/main.yml
+    - vars/packer.yml
+  roles:
+    - { role: lvm }

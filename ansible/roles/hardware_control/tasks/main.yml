@@ -1,0 +1,22 @@
+- name: Enable universe repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop:
+    - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }} universe"
+    - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }}-updates universe"
+    - "deb http://security.ubuntu.com/ubuntu/ {{ ansible_distribution_release }}-security universe"
+
+- name: Clone WDCommunity/wdnas-hwtools
+  become: true
+  ansible.builtin.git:
+    repo: https://github.com/WDCommunity/wdnas-hwtools
+    dest: /opt/wdnas-hwtools
+    version: master
+
+- name: Install wdnas-hwtools
+  become: true
+  shell:
+    cmd: ./install.sh
+    chdir: /opt/wdnas-hwtools

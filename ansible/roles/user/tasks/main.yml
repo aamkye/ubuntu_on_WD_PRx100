@@ -1,0 +1,5 @@
+- name: Add sudoers file
+  become: true
+  ansible.builtin.template:
+    src: sudoers
+    dest: "/etc/sudoers.d/{{ username }}"

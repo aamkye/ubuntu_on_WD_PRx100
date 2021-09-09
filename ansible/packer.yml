@@ -1,0 +1,7 @@
+- name: Packer
+  hosts: "{{ target | default('localhost') }}"
+  vars_files:
+    - vars/main.yml
+    - vars/packer.yml
+  roles:
+    - { role: packer }

@@ -1,0 +1,14 @@
+- include_tasks: docker_requirements.yml
+
+- include_tasks: docker_install.yml
+
+- include_tasks: docker_users.yml
+  when:
+    - docker_users is defined
+    - docker_users | length > 0
+
+- include_tasks: docker_compose.yml
+  when:
+    - docker_install_compose is defined
+    - docker_install_compose | bool
+

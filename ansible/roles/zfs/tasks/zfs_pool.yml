@@ -1,0 +1,24 @@
+- name: Check ZFS pool existance
+  command: zpool list -Ho name {{ item['name'] }}
+  register: result_pool_list
+  ignore_errors: true
+  changed_when: false
+
+- name: Create ZFS pool
+  become: true
+  shell: >-
+    zpool create
+    {{ '-o' if item['options'] else '' }} {{ item['options'] | join(' -o ') }}
+    {{ item['name'] }}
+    {{ item['mode'] if item['mode'] else '' }}
+    {{ item['devices'] | join(' ') }}
+  when:
+    - item['state'] | default('present') == 'present'
+    - result_pool_list.rc == 1
+
+- name: Destroy ZFS pool
+  become: true
+  command: zfs destroy -r {{ item['name'] }}
+  when:
+    - item['state'] | default('present') == 'absent'
+    - result_pool_list.rc == 0

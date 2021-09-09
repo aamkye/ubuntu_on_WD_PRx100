@@ -1,0 +1,5 @@
+- name: Setup ZFS
+  become: true
+  package:
+    name: zfsutils-linux
+    state: present
