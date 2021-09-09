@@ -4,6 +4,7 @@
 
 * [Ansible](#ansible)
   * [TOC](#toc)
+  * [Pre-requirements](#pre-requirements)
   * [Image building](#image-building)
   * [Image burn](#image-burn)
   * [NAS Part](#nas-part)
@@ -13,6 +14,20 @@
     * [Manually converting qcow2 to img](#manually-converting-qcow2-to-img)
     * [Existing ZFS pool](#existing-zfs-pool)
     * [Debug](#debug)
+
+## Pre-requirements
+
+Browse `vars/` folder and do necessary changes like:
+  * `packer`:
+    * `macaddress`
+    * `authorized_keys`
+    * `hostname`
+    * `username`
+    * `password`
+  * `zfs`:
+    * `zfs_pools`
+    * `zfs_datasets`
+    * `zfs_dataset_pass`
 
 ## Image building
 
