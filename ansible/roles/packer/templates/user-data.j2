@@ -4,8 +4,7 @@ autoinstall:
   interactive-sections: []
   locale: en_US.UTF-8
   keyboard:
-    layout: en
-    variant: us
+    layout: us
   refresh-installer:
     update: false
   apt:
@@ -48,7 +47,7 @@ autoinstall:
   ssh:
     install-server: true
     authorized-keys: {{ authorized_keys | from_yaml }}
-    allow-pw: no
+    allow-pw: false
   user-data:
     disable_root: false
   late-commands:
