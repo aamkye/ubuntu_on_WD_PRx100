@@ -8,15 +8,17 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 * [Setting up Ubuntu Server on WD PRx100](#setting-up-ubuntu-server-on-wd-prx100)
   * [TOC](#toc)
+  * [PR4100 Spec](#pr4100-spec)
   * [Overview](#overview)
-    * [Links](#links)
+    * [Ansible automation](#ansible-automation)
+    * [Links:](#links)
   * [Supported devices](#supported-devices)
-  * [Requirements:](#requirements)
+  * [Requirements](#requirements)
   * [Preparation](#preparation)
     * [Common](#common)
     * [Ubuntu](#ubuntu)
     * [MacOS (native M1 not supported)](#macos-native-m1-not-supported)
-  * [Download the Ubuntu Server *.iso](#download-the-ubuntu-server-iso)
+  * [Download the Ubuntu Server](#download-the-ubuntu-server)
   * [Main process](#main-process)
   * [Post installation (while kvm is still running)](#post-installation-while-kvm-is-still-running)
     * [Networking dynamic](#networking-dynamic)
@@ -55,7 +57,7 @@ The whole process can be accomplished on any linux-like system equipped with `KV
 
 ### Ansible automation
 
-There is [ansible](./ansible) folder with automatization of a few steps from [extras](#extras-meant-to-be-run-on-nas-directly) and [config](./config) folder containing netplan configs for KVM stage.
+There is [ansible](./ansible) folder with automatization of all steps from [extras](#extras-meant-to-be-run-on-nas-directly) and more.
 
 ### Links:
 

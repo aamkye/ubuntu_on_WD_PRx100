@@ -1,5 +1,19 @@
 # Ansible
 
+## TOC
+
+* [Ansible](#ansible)
+  * [TOC](#toc)
+  * [Image building](#image-building)
+  * [Image burn](#image-burn)
+  * [NAS Part](#nas-part)
+  * [Ansible part](#ansible-part)
+  * [Helpful stuff](#helpful-stuff)
+    * [Aliases](#aliases)
+    * [Manually converting qcow2 to img](#manually-converting-qcow2-to-img)
+    * [Existing ZFS pool](#existing-zfs-pool)
+    * [Debug](#debug)
+
 ## Image building
 
 ```bash
