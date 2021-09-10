@@ -4,6 +4,7 @@
   register: result
   until: result is succeeded
   ignore_errors: true
+  become: true
   ansible.builtin.package:
     name: "{{ docker_package }}"
     state: "{{ docker_package_state }}"

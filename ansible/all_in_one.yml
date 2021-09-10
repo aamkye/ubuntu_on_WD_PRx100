@@ -12,6 +12,4 @@
     - { role: bashrc }
     - { role: user }
 
-    - { role: zfs }
-
     - { role: docker }
