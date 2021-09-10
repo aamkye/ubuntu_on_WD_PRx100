@@ -8,10 +8,10 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 * [Setting up Ubuntu Server on WD PRx100](#setting-up-ubuntu-server-on-wd-prx100)
   * [TOC](#toc)
-  * [PR4100 Spec](#pr4100-spec)
-  * [Ansible automation](#ansible-automation)
   * [Overview](#overview)
-    * [Links:](#links)
+  * [Ansible automation](#ansible-automation)
+  * [PR4100 Spec](#pr4100-spec)
+  * [Links:](#links)
   * [Supported devices](#supported-devices)
   * [Requirements](#requirements)
   * [Preparation](#preparation)
@@ -32,6 +32,25 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 ---
 
+## Overview
+
+[Original](https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786) article was not covering all topics important for me so I had to do some reverse engineering and add some tweaks.
+
+This tutorial covers how to install Ubuntu Server on WD PR4100 or PR2100.
+
+It goes from preparation, downloading required packages, running installation, initial configuration and extras that most likely are intended to be used.
+
+The whole process can be accomplished on any linux-like system equipped with `KVM`.
+
+
+---
+
+## Ansible automation
+
+There is [ansible](./ansible) folder with automatization of all steps from [extras](#extras-meant-to-be-run-on-nas-directly) and more.
+
+---
+
 ## PR4100 Spec
 
 ```
@@ -45,25 +64,7 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 ---
 
-## Ansible automation
-
-There is [ansible](./ansible) folder with automatization of all steps from [extras](#extras-meant-to-be-run-on-nas-directly) and more.
-
----
-
-## Overview
-
-[Original](https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786) article was not covering all topics important for me so I had to do some reverse engineering and add some tweaks.
-
-This tutorial covers how to install Ubuntu Server on WD PR4100 or PR2100.
-
-It goes from preparation, downloading required packages, running installation, initial configuration and extras that most likely are intended to be used.
-
-The whole process can be accomplished on any linux-like system equipped with `KVM`.
-
----
-
-### Links:
+## Links:
 
 * <https://community.wd.com/t/guide-how-to-install-ubuntu-18-04-server-on-the-my-cloud-pr4100-nas/232786>
 * <https://packages.debian.org/bullseye/all/ovmf/download>
