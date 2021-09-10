@@ -90,10 +90,12 @@ The whole process can be accomplished on any linux-like system equipped with `KV
 
 ## Requirements
 
+* ~10G free space
 * `KVM`/`QEMU`
 * USB flash drive (8GB+)
 * `brew` (macos only)
 * `pv`
+* `python`
 
 ---
 
