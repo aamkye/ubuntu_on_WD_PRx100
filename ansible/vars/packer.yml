@@ -11,7 +11,8 @@ ubuntu_version: "21.04"
 ubuntu_iso: "ubuntu-{{ubuntu_version}}-live-server-amd64.iso"
 ubuntu_iso_checksum: "sha256:e4089c47104375b59951bad6c7b3ee5d9f6d80bfac4597e43a716bb8f5c1f3b0"
 
-packer_image_name: "nas-ubuntu-server.img"
+packer_image_name: "nas-ubuntu-server.qcow2"
+packer_image_name_raw: "nas-ubuntu-server.img"
 
 # Depends on HDD count
 usb_drive: /dev/sde

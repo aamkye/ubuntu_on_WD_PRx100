@@ -56,6 +56,8 @@ Before running new ubuntu server get all IP addresses in target network via `nma
 
 ```bash
 nmap -sP 10.0.0.0/24
+# or
+arp -a
 ```
 
 Unplug USB from PC and plug into NAS (no matter which USB port).
@@ -64,6 +66,8 @@ Now You need to localize NAS IP, run the same `nmap`:
 
 ```bash
 nmap -sP 10.0.0.0/24
+# or
+arp -a
 ```
 
 And get diff (lets say `10.0.0.101`)

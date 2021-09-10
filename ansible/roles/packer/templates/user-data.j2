@@ -15,8 +15,6 @@ autoinstall:
       version: 2
       renderer: networkd
       ethernets:
-        ens3:
-          dhcp4: true
         eno1:
           match:
             macaddress: {{ macaddress[0] }}
@@ -43,7 +41,7 @@ autoinstall:
   identity:
     hostname: {{ hostname }}
     username: {{ username }}
-    password: {{ password | password_hash('sha256')}}
+    password: {{ password | password_hash('sha256') }}
   ssh:
     install-server: true
     authorized-keys: {{ authorized_keys | from_yaml }}

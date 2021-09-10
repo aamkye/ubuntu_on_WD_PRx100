@@ -4,3 +4,16 @@
     path: "{{ tmp_dir }}/output/{{ packer_image_name }}"
     mode: '0777'
 
+- name: "Convert qcow2 image to raw"
+  become: true
+  args:
+    chdir: "{{ tmp_dir }}/output"
+    creates: "{{ tmp_dir }}/output/{{ packer_image_name_raw }}"
+  shell: |
+    qemu-img convert {{ packer_image_name }} -O raw {{ packer_image_name_raw }}
+
+- name: "Change {{ packer_image_name_raw }} mode"
+  become: true
+  ansible.builtin.file:
+    path: "{{ tmp_dir }}/output/{{ packer_image_name_raw }}"
+    mode: '0777'
