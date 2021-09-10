@@ -29,6 +29,10 @@ Browse `vars/` folder and do necessary changes like:
     * `zfs_datasets`
     * `zfs_dataset_pass`
 
+as well as:
+  * `ansible.cfg`:
+    * `remote_user`
+
 ## Image building
 
 ```bash

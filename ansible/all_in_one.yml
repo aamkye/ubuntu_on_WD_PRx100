@@ -9,8 +9,6 @@
     - { role: hardware_control }
     - { role: internal_memory }
 
-    - { role: lvm }
-
     - { role: bashrc }
     - { role: user }
 
