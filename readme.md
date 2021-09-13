@@ -45,7 +45,7 @@ The whole process can be accomplished on any linux-like system equipped with `KV
 
 ---
 
-## Ansible automation
+## Ansible (automated way)
 
 There is [ansible](./ansible) folder with automatization of all steps from [extras](#extras-meant-to-be-run-on-nas-directly) and more.
 
@@ -100,7 +100,7 @@ There is [ansible](./ansible) folder with automatization of all steps from [extr
 
 ---
 
-## Preparation
+## Preparation (manual way)
 
 ### Common
 
