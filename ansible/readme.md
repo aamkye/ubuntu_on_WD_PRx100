@@ -161,6 +161,17 @@ $ sudo zpool import -f 0000000000000000000
 $ zload nas/data
 ```
 
+### Changing password for zfs dataset
+
+_Existing keys has to be loaded._
+
+```bash
+zfs change-key \
+  -o keylocation=prompt \
+  -o keyformat=passphrase \
+  nas/data
+```
+
 ### Debug
 
 While You cannot connect to NAS, unplug USB from it, and plug back to PC. Go to tmp folder (BIOS is there), and run command (replace `disk5` with whatever suits your case):
