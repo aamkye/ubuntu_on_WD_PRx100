@@ -172,6 +172,18 @@ zfs change-key \
   nas/data
 ```
 
+### Changing LVM size
+
+```
+* parted /dev/sde
+* print (fix if needed)
+* resizepart 3
+* <input size>
+* quit
+* pvresize /dev/sde3
+* lvextend -r -l100%free /dev/mapper/ubuntu--vg-ubuntu--lv
+```
+
 ### Debug
 
 While You cannot connect to NAS, unplug USB from it, and plug back to PC. Go to tmp folder (BIOS is there), and run command (replace `disk5` with whatever suits your case):

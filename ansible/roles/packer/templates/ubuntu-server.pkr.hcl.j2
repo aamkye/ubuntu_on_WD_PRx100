@@ -16,7 +16,7 @@ source "qemu" "ubuntu-server" {
   output_directory        = "output"
 
   vm_name                 = "{{ packer_image_name }}"
-  disk_size               = "10G"
+  disk_size               = "5G"
   memory                  = {{ (ansible_facts.memtotal_mb | int) }}
   cpus                    = {{ (ansible_facts.processor_vcpus | int) }}
   firmware                = "bios.bin"

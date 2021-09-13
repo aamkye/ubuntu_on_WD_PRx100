@@ -41,18 +41,6 @@ autoinstall:
       reorder_uefi: False
     swap:
       size: 0
-    config:
-      - type: partition
-        id: boot-partition
-        device: root-disk
-        size: 1G
-      - type: partition
-        id: root-partition
-        size: 4G
-      - type: partition
-        id: data-partition
-        device: root-disk
-        size: -1
   identity:
     hostname: {{ hostname }}
     username: {{ username }}

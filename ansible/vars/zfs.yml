@@ -1,3 +1,5 @@
+zfs_existing_pool: true
+
 zfs_pools:
   - name: nas
     state: present

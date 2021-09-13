@@ -15,6 +15,16 @@
   when:
     - item['state'] | default('present') == 'present'
     - result_pool_list.rc == 1
+    - zfs_existing_pool == false
+
+- name: Import existing pool
+  become: true
+  shell: |
+    zpool import -f $(zpool import | grep "id:" | awk -F': ' '{print $2}')
+  when:
+    - item['state'] | default('present') == 'present'
+    - result_pool_list.rc == 1
+    - zfs_existing_pool == true
 
 - name: Destroy ZFS pool
   become: true

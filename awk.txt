@@ -1,0 +1,15 @@
+   pool: nas
+     id: 0000000000000000000
+  state: ONLINE
+status: The pool was last accessed by another system.
+ action: The pool can be imported using its name or numeric identifier and
+        the '-f' flag.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-EY
+ config:
+
+        nas         ONLINE
+          raidz2-0  ONLINE
+            sda     ONLINE
+            sdb     ONLINE
+            sdc     ONLINE
+            sdd     ONLINE

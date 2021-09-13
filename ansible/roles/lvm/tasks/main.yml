@@ -1,5 +1,15 @@
-- name: Extend filesystem
+- name: Extend an existing partition to fill all available space
+  become: true
+  community.general.parted:
+    device: "{{ usb_drive }}"
+    number: "{{ usb_drive_partition }}"
+    part_end: "100%"
+    resize: true
+    state: present
+
+- name: Extend filesystem to fill all available space
   become: true
   shell: |
+    pvresize {{ usb_drive }}{{ usb_drive_partition }}
     lvresize -l +100%FREE $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
     resize2fs $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')

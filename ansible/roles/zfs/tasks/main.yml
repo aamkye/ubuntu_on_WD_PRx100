@@ -5,3 +5,5 @@
 
 - include_tasks: zfs_dataset.yml
   loop: "{{ zfs_datasets }}"
+  when:
+    - not zfs_existing_pool
