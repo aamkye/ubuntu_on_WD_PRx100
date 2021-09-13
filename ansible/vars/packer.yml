@@ -1,6 +1,7 @@
 macaddress:
   - "00:14:ee:03:96:45"
   - "00:14:ee:03:96:46"
+bond_macaddress: 00:00:00:00:00:01
 authorized_keys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINCPCeqDxLSZz/1BVTQu62dU+D+mowjZc3aNE1HGbnUo"
 hostname: "nas"

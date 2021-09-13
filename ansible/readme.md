@@ -56,25 +56,24 @@ pv -tpreb nas-ubuntu-server.img | dd of=/dev/disk5 bs=4096 conv=notrunc,noerror
 
 ## NAS Part
 
-Before running new ubuntu server get all IP addresses in target network via `nmap`:
-
-```bash
-nmap -sP 10.0.0.0/24
-# or
-arp -a
-```
-
 Unplug USB from PC and plug into NAS (no matter which USB port).
 
 Now You need to localize NAS IP, run the same `nmap`:
 
-```bash
-nmap -sP 10.0.0.0/24
-# or
-arp -a
-```
+_NAS `bond0` interface should have `00:00:00:00:00:01` macaddress._
 
-And get diff (lets say `10.0.0.101`)
+```bash
+nmap -p 22 10.0.0.0/24
+
+(...)
+Nmap scan report for 10.0.0.101
+Host is up (0.012s latency).
+
+PORT   STATE SERVICE
+22/tcp open  ssh
+MAC Address: 00:00:00:00:00:01 (Xerox)
+(...)
+```
 
 If You can ssh to NAS - go to Ansible part.
 

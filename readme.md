@@ -91,7 +91,7 @@ There is [ansible](./ansible) folder with automatization of all steps from [extr
 
 ## Requirements
 
-* ~10G free space
+* ~13G free space
 * `KVM`/`QEMU`
 * USB flash drive (8GB+)
 * `brew` (macos only)

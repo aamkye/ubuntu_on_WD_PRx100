@@ -1,4 +1,5 @@
 - name: Extend filesystem
   become: true
   shell: |
-    lvresize --verbose --resizefs -l +100%FREE $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
+    lvresize -l +100%FREE $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
+    resize2fs $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
