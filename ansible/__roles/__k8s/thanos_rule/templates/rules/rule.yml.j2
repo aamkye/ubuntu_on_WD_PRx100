@@ -1,0 +1,47 @@
+# level:metric:operations
+# level - represents the aggregation level and labels of the rule output
+# metric - is the metric name and should be unchanged other than stripping _total off counters when using rate() or irate().
+# operations - is a list of operations that were applied to the metric, newest operation first.
+
+# groups:
+#   - name: 'recording rules #1'
+#     partial_response_strategy: "warn"
+#     rules:
+#       # Describes how many requests has been done to particular paths
+#       - record: path_method_payload_status:ep_http_request_total:sum
+#         expr: |
+#           sum(
+#             ep_http_request_total{}
+#           ) without (device_id, instance)
+
+#   - name: 'recording rules #2'
+#     partial_response_strategy: "warn"
+#     rules:
+#       # Describes how many request particular device made to path
+#       - record: device_path_method_payload_status:ep_http_request_total:sum
+#         expr: |
+#           sum(
+#             ep_http_request_total{device_id!~"(UNKNOWN)", payload_type!~"(\\[\\])"}
+#           ) without (instance)
+
+#   - name: 'recording rules #3'
+#     partial_response_strategy: "warn"
+#     rules:
+#       # Describes buckets related to latencies of API
+#       - record: view_latency:django_http_request_latency_seconds_bucket:sum:rate1m
+#         expr: |
+#           sum(
+#             rate(
+#               django_http_request_latency_seconds_bucket[1m]
+#             )
+#           ) by (le, view, job, env, stack)
+
+#   - name: 'recording rules #4'
+#     partial_response_strategy: "warn"
+#     rules:
+#       # Describes amount of calls to particular views with statuses
+#       - record: view_status:django_http_request_total:sum
+#         expr: |
+#           sum(
+#             django_http_request_total
+#           ) by (status, view, job, env, stack)

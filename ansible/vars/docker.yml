@@ -1,5 +1,5 @@
 # Edition can be one of: 'ce' (Community Edition) or 'ee' (Enterprise Edition).
-docker_edition: 'ce'
+docker_edition: ce
 docker_package: "docker-{{ docker_edition }}"
 docker_package_state: present
 
@@ -10,7 +10,7 @@ docker_restart_handler_state: restarted
 
 # Docker Compose options.
 docker_install_compose: True
-docker_compose_version: "1.29.2"
+docker_compose_version: 1.29.2
 docker_compose_path: /usr/local/bin/docker-compose
 
 # Used only for Debian/Ubuntu. Switch 'stable' to 'edge' if needed.
@@ -20,6 +20,12 @@ docker_apt_repository: "deb [arch={{ docker_apt_arch }}] https://download.docker
 docker_apt_ignore_key_error: True
 
 # A list of users who will be added to the docker group.
-docker_users: [
-  'quaak'
-]
+docker_users:
+  - !vault |
+    $ANSIBLE_VAULT;1.2;AES256;id
+    33343531666166633133393430633263616131303134323864303932633334393535333937323735
+    3362396238386235376334623436623836353536306236610a663334653732356534303766323265
+    61396235633961343962386334356236393634383964313732333535346138656165303635636533
+    3138313762323664350a653139643131393062333664396231343434383634353163666265663436
+    3736
+

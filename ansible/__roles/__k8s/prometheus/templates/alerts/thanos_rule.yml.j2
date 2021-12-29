@@ -1,0 +1,318 @@
+groups:
+  - name: Thanos rule
+    rules:
+      - alert: Thanos rule queue is dropping alerts
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  thanos_alert_queue_alerts_dropped_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 0
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: high
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos rule sender is failing alerts
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  thanos_alert_sender_alerts_dropped_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 0
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: high
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos rule high rule evaluation failures
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  prometheus_rule_evaluation_failures_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  prometheus_rule_evaluations_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: high
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos rule high rule evaluation warnings
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  thanos_rule_evaluation_with_warnings_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 0
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos rule rule evaluation latency high
+        expr: |
+          (
+            sum(
+              label_replace(
+                prometheus_rule_group_last_duration_seconds{job=~"thanos-rule"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance) >
+            sum(
+              label_replace(
+                prometheus_rule_group_interval_seconds{job=~"thanos-rule"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          )
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: medium
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos rule grpc error rate
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded", job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  grpc_server_started_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos rule config reload failure
+        expr: |
+          (
+            avg(
+              label_replace(
+                thanos_rule_config_last_reload_successful{job=~"thanos-rule"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) != 1
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: high
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos rule query high dns failures
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  thanos_ruler_query_apis_dns_failures_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  thanos_ruler_query_apis_dns_lookups_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 1 / 100
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos rule alertmanager high dns failures
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  thanos_ruler_alertmanagers_dns_failures_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  thanos_ruler_alertmanagers_dns_lookups_total{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 1 / 100
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos rule no evaluation for 10 intervals
+        expr: |
+          (
+            time() -
+            max(
+              label_replace(
+                prometheus_rule_group_last_evaluation_timestamp_seconds{job=~"thanos-rule"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) by (job, private_ip, group)
+            >
+            10 *
+            max(
+              label_replace(
+                prometheus_rule_group_interval_seconds{job=~"thanos-rule"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) by (job, private_ip, group)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          )
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: medium
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos no rule evaluations
+        expr: |
+          (
+            (
+              sum(
+                rate(
+                  label_replace(
+                    prometheus_rule_evaluations_total{job=~"thanos-rule"},
+                    "private_ip", "$1", "instance", "(.*):.*"
+                  )[2m:]
+                )
+              ) without (instance) <= 0
+            )
+            AND
+            (
+              sum(
+                label_replace(
+                  thanos_rule_loaded_rules{job=~"thanos-rule"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )
+              ) without (instance) > 0
+            )
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          )
+        for: 0s
+        labels:
+          type: thanos/rule
+          severity: high
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'

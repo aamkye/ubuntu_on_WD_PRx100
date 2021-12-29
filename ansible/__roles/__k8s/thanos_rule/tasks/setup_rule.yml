@@ -1,0 +1,14 @@
+- name: Create thanos rule folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/thanos/rule/rules/
+
+- name: Copy thanos rules config
+  template:
+    src: "rules/{{ item }}.j2"
+    dest: "/opt/thanos/rule/rules/{{ item }}"
+  loop:
+    - rule.yml

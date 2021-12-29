@@ -1,0 +1,26 @@
+- name: Create alerts prometheus folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/prometheus/alerts
+
+- name: Copy prometheus alerts config
+  template:
+    src: "alerts/{{ item }}.j2"
+    dest: "/opt/prometheus/alerts/{{ item }}"
+  loop:
+    - cadvisor.yml
+    - node.yml
+    - prometheus.yml
+
+- name: Copy prometheus prod alerts config
+  template:
+    src: "alerts/{{ item }}.j2"
+    dest: "/opt/prometheus/alerts/{{ item }}"
+  loop:
+    - thanos_absent.yml
+    - thanos_query.yml
+    - thanos_compact.yml
+    - thanos_rule.yml

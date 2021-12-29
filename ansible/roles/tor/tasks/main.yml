@@ -1,0 +1,34 @@
+- name: Ensure packages are installed
+  become: true
+  ansible.builtin.package:
+    name: '{{ item }}'
+    state: latest
+  loop:
+    - tor
+
+- name: Add config to torrc
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    marker: "# tor {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      ControlPort 9051
+      MaxCircuitDirtiness 60
+      NewCircuitPeriod 15
+      ClientOnly 1
+
+- name: Restart tor service
+  become: true
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: yes
+    name: tor
+
+- name: Add aliases to bashrc
+  ansible.builtin.blockinfile:
+    path: ~/.bashrc
+    marker: "# tor {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      alias tor_on='source torsocks on'
+      alias tor_off='source torsocks off'
+      alias torred='torsocks'

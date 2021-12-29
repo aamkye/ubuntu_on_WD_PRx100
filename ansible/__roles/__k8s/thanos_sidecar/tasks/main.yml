@@ -1,0 +1,60 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Reset upload settings
+  become: True
+  file:
+    path: /opt/prometheus/storage/thanos.shipper.json
+    state: absent
+  when:
+    - reset_shipper | default(false) | bool == True
+
+- name: Run thanos sidecar
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-sidecar
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "/opt/prometheus:/opt/prometheus"
+      - "/opt/thanos:/opt/thanos"
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_sidecar_grpc' ] }}:{{ port_definition[ 'thanos_sidecar_grpc' ] }}"
+      - "0.0.0.0:{{ port_definition[ 'thanos_sidecar_http' ] }}:{{ port_definition[ 'thanos_sidecar_http' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - 'sidecar'
+      - '--tsdb.path=/opt/prometheus/storage'
+      - "--prometheus.url=http://{{ inventory_hostname }}:{{ port_definition[ 'prometheus_server' ] }}"
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_sidecar_http' ] }}"
+      - "--grpc-address=0.0.0.0:{{ port_definition[ 'thanos_sidecar_grpc' ] }}"
+      - '--objstore.config-file=/opt/thanos/store/config/store.yml'
+      - '--log.level=info'
+      - '--shipper.upload-compacted'
+
+- name: "Wait for thanos sidecar #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'thanos_sidecar_http' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+# - name: "Wait for thanos sidecar #2"
+#   retries: 8
+#   delay: 15
+#   register: result
+#   until: result is succeeded
+#   uri:
+#     timeout: 120
+#     url: http://{{ inventory_hostname }}:{{ port_definition[ 'thanos_sidecar_http' ] }}/

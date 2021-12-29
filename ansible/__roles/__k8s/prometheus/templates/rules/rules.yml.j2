@@ -1,0 +1,25 @@
+groups:
+  - name: recording rules
+    rules:
+      # level:metric:operations
+      # level - represents the aggregation level and labels of the rule output
+      # metric - is the metric name and should be unchanged other than stripping _total off counters when using rate() or irate().
+      # operations - is a list of operations that were applied to the metric, newest operation first.
+
+      # Describes dead/killed containers
+      - record: task_id:container_last_seen:max_over_time5m:count
+        expr: |
+          count(
+            max_over_time(
+              container_last_seen{task_id=~".+"}[5m]
+            ) unless container_last_seen
+          ) by (stack, service_name, service_number, task_id, private_ip, purpose, job, env)
+
+      # Describes dead/killed services
+      - record: service_name:container_last_seen:max_over_time5m:count
+        expr: |
+          count(
+            max_over_time(
+              container_last_seen{service_name=~".+"}[5m]
+            ) unless container_last_seen
+          ) by (stack, service_name, job, env)

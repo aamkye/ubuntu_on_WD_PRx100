@@ -1,0 +1,70 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Create thanos rule folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/thanos/rule/data/
+
+- include_role:
+    name: setup_thanos_rule
+    tasks_from: setup_rule.yml
+
+- include_role:
+    name: setup_thanos_rule
+    tasks_from: setup_alert.yml
+
+- name: Run thanos rule
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-rule
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "/opt/thanos/rule:/opt/thanos/rule"
+      - "/opt/thanos/store/config:/opt/thanos/store/config"
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_rule_grpc' ] }}:{{ port_definition[ 'thanos_rule_grpc' ] }}"
+      - "0.0.0.0:{{ port_definition[ 'thanos_rule_http' ] }}:{{ port_definition[ 'thanos_rule_http' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - 'rule'
+      - '--data-dir=/opt/thanos/rule/data'
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_rule_http' ] }}"
+      - "--grpc-address=0.0.0.0:{{ port_definition[ 'thanos_rule_grpc' ] }}"
+      - "--rule-file '/opt/thanos/rule/alerts/*.yml'"
+      - "--rule-file '/opt/thanos/rule/rules/*.yml'"
+      - "--alert.query-url=http://thanos.nas.localhost:{{ port_definition[ 'trickster' ] }}"
+      - "--alertmanagers.url=dns+http://thanos.nas.localhost:{{ port_definition[ 'prometheus_alertmanager' ] }}"
+      - "--objstore.config-file=/opt/thanos/store/config/store.yml"
+      - "--query=dns+thanos.nas.localhost:{{ port_definition[ 'trickster' ] }}"
+      - '--tsdb.block-duration=2h'
+      - '--tsdb.retention=1d'
+      - '--eval-interval=1m'
+      - '--resend-delay=1m'
+      - "--label 'level=\"global-view\"'"
+      - "--label 'origin=\"{{ inventory_hostname }}\"'"
+      - "--label 'network=\"global\"'"
+      - "--alert.label-drop=origin"
+      - '--log.level=info'
+
+- name: "Wait for thanos rule #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'thanos_rule_http' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED

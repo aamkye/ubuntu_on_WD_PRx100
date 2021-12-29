@@ -1,0 +1,121 @@
+groups:
+  - name: Thanos compact
+    rules:
+      - alert: Thanos compactor multiple compactors are running
+        expr: |
+          sum(
+            label_replace(
+              up{job=~"thanos-compact"},
+              "private_ip", "$1", "instance", "(.*):.*"
+            )
+          ) without (instance)
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 1
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos compactor halted
+        expr: |
+          (
+            sum(
+              label_replace(
+                thanos_compactor_halted{job=~"thanos-compact"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) == 1
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos compactor high compaction failures
+        expr: |
+          sum(
+            rate(
+              label_replace(
+                thanos_compact_group_compactions_failures_total{job=~"thanos-compact"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )[2m:]
+            )
+          ) without (instance) /
+          sum(
+            rate(
+              label_replace(
+                thanos_compact_group_compactions_total{job=~"thanos-compact"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )[2m:]
+            )
+          ) without (instance)
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos compactor bucket high operation failures
+        expr: |
+          sum(
+            rate(
+              label_replace(
+                thanos_objstore_bucket_operation_failures_total{job=~"thanos-compact"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )[2m:]
+            )
+          ) without (instance) /
+          sum(
+            rate(
+              label_replace(
+                thanos_objstore_bucket_operations_total{job=~"thanos-compact"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )[2m:]
+            )
+          ) without (instance)
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos compactor has not run in last 24h
+        expr: |
+          (
+            time() - sum(
+              label_replace(
+                thanos_objstore_bucket_last_successful_upload_time{job=~"thanos-compact"},
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 86400 < time()
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'

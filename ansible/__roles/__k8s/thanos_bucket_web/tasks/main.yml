@@ -1,0 +1,47 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Run thanos bucket web
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-bucket-web
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_bucket_web_http' ] }}:{{ port_definition[ 'thanos_bucket_web_http' ] }}"
+    pull: true
+    recreate: true
+    volumes:
+      - "/opt/thanos/store/config:/opt/thanos/store/config"
+    command:
+      - 'tools bucket web'
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_bucket_web_http' ] }}"
+      - '--objstore.config-file=/opt/thanos/store/config/store.yml'
+      - '--log.level=info'
+      - '--label=origin'
+
+- name: "Wait for thanos bucket web #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'thanos_bucket_web_http' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+- name: "Wait for thanos bucket web #2"
+  retries: 8
+  delay: 15
+  register: result
+  until: result is succeeded
+  uri:
+    timeout: 120
+    url: http://{{ inventory_hostname }}:{{ port_definition[ 'thanos_bucket_web_http' ] }}/

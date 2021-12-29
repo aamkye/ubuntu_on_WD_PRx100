@@ -1,0 +1,19 @@
+- name: Create thanos store folders
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/thanos/store/config/
+    - /opt/thanos/store/data/
+
+- name: Copy thanos object storage config
+  template:
+    src: "{{ item }}.j2"
+    dest: "/opt/thanos/store/config/{{ item }}"
+    mode: 0600
+    owner: quaak
+    group: quaak
+  loop:
+    - store.yml
+    - repair_store.yml

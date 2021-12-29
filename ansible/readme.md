@@ -84,7 +84,7 @@ If not - debug time.
 Just run:
 
 ```bash
-ansible-playbook all_in_one.yml --ask-become-pass -e "target=10.0.0.101" -i 10.0.0.101,
+ansible-playbook all_in_one.yml --ask-become-pass -e "target=10.0.0.101 custom_dns=true" -i 10.0.0.101,
 ```
 
 And watch the magic.
@@ -178,7 +178,7 @@ zfs change-key \
 * parted /dev/sde
 * print (fix if needed)
 * resizepart 3
-* <input size>
+* <input size> (eg `100%`)
 * quit
 * pvresize /dev/sde3
 * lvextend -r -l100%free /dev/mapper/ubuntu--vg-ubuntu--lv

@@ -1,0 +1,69 @@
+groups:
+  - name: cAdvisor
+    rules:
+      - alert: Swarm task (container) killed
+        expr: |
+          task_id:container_last_seen:max_over_time5m:count
+        for: 0s
+        labels:
+          severity: warning
+          type: swarm
+        annotations:
+          identifier: '{% raw %}{{ $labels.task_id }} of {{ $labels.service_name }} ({{ $labels.stack }}){% endraw %}'
+          # value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Swarm service killed
+        expr: |
+          service_name:container_last_seen:max_over_time5m:count
+        for: 0s
+        labels:
+          severity: warning
+          type: swarm
+        annotations:
+          identifier: '{% raw %}{{ $labels.service_name }} ({{ $labels.stack }}){% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'
+
+### SWARM
+      - alert: Swarm container high CPU usage
+        expr: |
+          (
+            sum(
+              rate(
+                container_cpu_usage_seconds_total{task_id=~"(.+)"}[5m]
+              )
+            ) by (stack, service_name, service_number, task_id, private_ip, purpose, env, job)
+          ) > 0.85
+        for: 0s
+        labels:
+          severity: warning
+          type: swarm
+        annotations:
+          identifier: '{% raw %}{{ $labels.task_id }} of {{ $labels.service_name }} ({{ $labels.stack }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Swarm container high memory usage
+        expr: |
+          (
+            sum(
+              container_memory_usage_bytes{task_id=~"(.+)", purpose=~"(SWARM)_([A-Z]*)_([A-Z]*)_(WORKER).*"}
+            ) by (stack, service_name, service_number, task_id, private_ip, purpose, env, job) /
+            (2*1024*1024*1024)
+          ) > 0.85
+        for: 0s
+        labels:
+          severity: warning
+          type: swarm
+        annotations:
+          identifier: '{% raw %}{{ $labels.task_id }} of {{ $labels.service_name }} ({{ $labels.stack }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Swarm service in dead-loop
+        expr: |
+          sum(count_over_time(service_name:container_last_seen:max_over_time5m:count[1h])) by (stack, service_name, service_number, private_ip, purpose, job, env) >= 12
+        for: 0s
+        labels:
+          severity: high
+          type: swarm
+        annotations:
+          identifier: '{% raw %}{{ $labels.service_name }} ({{ $labels.stack }}){% endraw %}'
+          value: '{% raw %}{{ $value }}{% endraw %}'

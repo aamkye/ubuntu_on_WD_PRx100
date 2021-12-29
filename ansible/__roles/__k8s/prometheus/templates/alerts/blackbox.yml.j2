@@ -1,0 +1,29 @@
+groups:
+  - name: Blackbox
+    rules:
+{% for alert in [
+  {'duration':'0s', 'value':'604800', 'severity':'warning'},
+  {'duration':'0s', 'value':'86400', 'severity':'high'},
+  {'duration':'0s', 'value':'3600', 'severity':'critical'},
+]%}
+      - alert: SSL cert will expire soon
+        expr: |
+          probe_ssl_earliest_cert_expiry{} - time() < {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: blackbox/ssl
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'
+{% endfor %}
+
+      - alert: Address unreachable
+        expr: |
+          probe_success{} != 1
+        for: 0s
+        labels:
+          severity: high
+          type: blackbox/dns
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'

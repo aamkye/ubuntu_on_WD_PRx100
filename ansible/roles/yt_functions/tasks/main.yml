@@ -1,0 +1,22 @@
+- name: Ensure packages are installed
+  become: true
+  ansible.builtin.package:
+    name: '{{ item }}'
+    state: latest
+  loop:
+    - parallel
+    - jq
+
+- name: Install bottle into the specified (virtualenv), inheriting globally installed modules
+  ansible.builtin.pip:
+    name: "{{ item  }}"
+    executable: "~/.pyenv/shims/pip"
+  loop:
+    - youtube-dl
+
+- name: Clone amadeuszkryze/yt-functions
+  become: true
+  ansible.builtin.git:
+    repo: https://github.com/amadeuszkryze/yt-functions/
+    dest: /opt/yt-functions
+    version: master

@@ -1,0 +1,162 @@
+global:
+  scrape_interval:     1m
+  scrape_timeout:      1m
+  evaluation_interval: 1m
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    env: home
+    origin: nas
+
+rule_files:
+  - /opt/prometheus/rules/rules.yml
+  - /opt/prometheus/alerts/blackbox.yml
+  - /opt/prometheus/alerts/cadvisor.yml
+  - /opt/prometheus/alerts/node.yml
+  - /opt/prometheus/alerts/prometheus.yml
+  - /opt/prometheus/alerts/thanos_absent.yml
+  - /opt/prometheus/alerts/thanos_query.yml
+  - /opt/prometheus/alerts/thanos_compact.yml
+  - /opt/prometheus/alerts/thanos_rule.yml
+
+alerting:
+  alert_relabel_configs:
+    - regex: '(origin)'
+      action: labeldrop
+  alertmanagers:
+    - scheme: http
+      path_prefix: /
+      dns_sd_configs:
+      - names:
+        - "prometheus.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'prometheus_alertmanager' ] }}
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  - job_name: 'prometheus'
+    dns_sd_configs:
+      - names:
+        - "prometheus.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'prometheus_server' ] }}
+
+  - job_name: 'alertmanager'
+    dns_sd_configs:
+      - names:
+        - "prometheus.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'prometheus_alertmanager' ] }}
+
+  - job_name: 'grafana'
+    dns_sd_configs:
+      - names:
+        - "grafana.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'grafana_server' ] }}
+
+  - job_name: 'kibana-alerts'
+    static_configs:
+      - targets:
+          - 10.1.1.213:{{ port_definition[ 'prometheus_pushgateway_exporter' ] }}
+
+  - job_name: 'trickster'
+    dns_sd_configs:
+      - names:
+        - "prometheus.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'trickster_exporter' ] }}
+      - names:
+        - "thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'trickster_exporter' ] }}
+
+  - job_name: 'thanos-sidecar'
+    dns_sd_configs:
+      - names:
+        - "prometheus.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'thanos_sidecar_http' ] }}
+
+  - job_name: 'thanos-query'
+    dns_sd_configs:
+      - names:
+        - "thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'thanos_query_http' ] }}
+      - names:
+        - "thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'thanos_query_http_secondary' ] }}
+
+  - job_name: 'thanos-store'
+    dns_sd_configs:
+      - names:
+        - "thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'thanos_store_http' ] }}
+
+  - job_name: 'thanos-rule'
+    dns_sd_configs:
+      - names:
+        - "thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'thanos_rule_http' ] }}
+
+  - job_name: 'thanos-compact'
+    dns_sd_configs:
+      - names:
+        - "tools-thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'thanos_compact_http' ] }}
+
+  - job_name: 'thanos-alertmanager'
+    dns_sd_configs:
+      - names:
+        - "thanos.nas.localhost"
+        refresh_interval: 60s
+        type: 'A'
+        port: {{ port_definition[ 'prometheus_alertmanager' ] }}
+
+  - job_name: 'nodes'
+
+  - job_name: 'haproxy'
+
+  - job_name: 'openvpn'
+
+  - job_name: 'cadvisor'
+
+    metric_relabel_configs:
+      - regex: '(id|exported_name|instance)'
+        action: labeldrop
+
+      - source_labels: [ container_label_com_docker_swarm_task_name ]
+        regex: '(.+)\_(.+)\.(.+)\.(.+)'
+        replacement: '$1'
+        target_label: stack
+      - source_labels: [ container_label_com_docker_swarm_task_name ]
+        regex: '(.+)\_(.+)\.(.+)\.(.+)'
+        replacement: '$2'
+        target_label: service_name
+      - source_labels: [ container_label_com_docker_swarm_task_name ]
+        regex: '(.+)\_(.+)\.(.+)\.(.+)'
+        replacement: '$3'
+        target_label: service_number
+      - source_labels: [ container_label_com_docker_swarm_task_name ]
+        regex: '(.+)\_(.+)\.(.+)\.(.+)'
+        replacement: '$4'
+        target_label: task_id

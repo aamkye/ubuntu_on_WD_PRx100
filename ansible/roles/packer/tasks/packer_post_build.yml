@@ -9,7 +9,7 @@
   args:
     chdir: "{{ tmp_dir }}/output"
     creates: "{{ tmp_dir }}/output/{{ packer_image_name_raw }}"
-  shell: |
+  ansible.builtin.shell: |
     qemu-img convert {{ packer_image_name }} -O raw {{ packer_image_name_raw }}
 
 - name: "Change {{ packer_image_name_raw }} mode"

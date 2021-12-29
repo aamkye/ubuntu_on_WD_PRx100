@@ -1,0 +1,230 @@
+groups:
+  - name: Thanos query
+    rules:
+      - alert: Thanos query http request query error rate high
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  http_requests_total{code=~"5..", job=~"thanos-query", handler="query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  http_requests_total{job=~"thanos-query", handler="query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos query http request query range error rate high
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  http_requests_total{code=~"5..", job=~"thanos-query", handler="query_range"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  http_requests_total{job=~"thanos-query", handler="query_range"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos query grpc server error rate
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded", job=~"thanos-query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  grpc_server_started_total{job=~"thanos-query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos query grpc client error rate
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  grpc_client_handled_total{grpc_code!="OK", job=~"thanos-query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+            sum(
+              rate(
+                label_replace(
+                  grpc_client_started_total{job=~"thanos-query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 5 / 100
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos query high dns failures
+        expr: |
+          (
+            sum(
+              rate(
+                label_replace(
+                  thanos_query_store_apis_dns_failures_total{job=~"thanos-query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) /
+           sum(
+             rate(
+                label_replace(
+                  thanos_query_store_apis_dns_lookups_total{job=~"thanos-query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) > 1 / 100
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Thanos query instant latency high
+        expr: |
+          (
+            histogram_quantile(
+              0.99,
+              sum(
+                label_replace(
+                  http_request_duration_seconds_bucket{job=~"thanos-query", handler="query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )
+              ) without (instance)
+            ) > 10
+          and
+            sum(
+              rate(
+                label_replace(
+                  http_request_duration_seconds_bucket{job=~"thanos-query", handler="query"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) > 0
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          )
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'
+
+      - alert: Thanos query range latency high
+        expr: |
+          (
+            histogram_quantile(
+              0.99,
+              sum(
+                label_replace(
+                  http_request_duration_seconds_bucket{job=~"thanos-query", handler="query_range"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )
+              ) without (instance)
+            ) > 10
+          and
+            sum(
+              rate(
+                label_replace(
+                  http_request_duration_seconds_bucket{job=~"thanos-query", handler="query_range"},
+                  "private_ip", "$1", "instance", "(.*):.*"
+                )[2m:]
+              )
+            ) without (instance) > 0
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          )
+        for: 0s
+        labels:
+          severity: warning
+          type: thanos/query
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'

@@ -1,0 +1,99 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Create config prometheus folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/prometheus/config
+
+- name: Create storage prometheus folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/prometheus/storage
+
+- name: Copy prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: /opt/prometheus/config/prometheus.yml
+
+- include_role:
+    name: setup_prometheus
+    tasks_from: setup_rule.yml
+
+- include_role:
+    name: setup_prometheus
+    tasks_from: setup_alert.yml
+
+- name: "Get info of prometheus container"
+  docker_container_info:
+    name: prometheus
+  register: prometheus_container
+
+- name: Run prometheus
+  become: True
+  when:
+    - (setup_prometheus | default(false) | bool == True or not prometheus_container.exists == True)
+  docker_container:
+    image: "prom/prometheus:{{ prometheus_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: prometheus
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "/opt/prometheus:/opt/prometheus"
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'prometheus_server' ] }}:{{ port_definition[ 'prometheus_server' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - '--config.file=/opt/prometheus/config/prometheus.yml'
+      - '--storage.tsdb.path=/opt/prometheus/storage'
+      - "--web.external-url http://{{ inventory_hostname }}:{{ port_definition[ 'prometheus_server' ] }}/"
+      - '--web.enable-admin-api'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.max-block-duration=2h'
+      - '--storage.tsdb.min-block-duration=2h'
+      - '--storage.tsdb.retention.time=6h'
+      - '--storage.tsdb.retention.size=1GB'
+      - '--web.page-title="aws-account prometheus at home"'
+      - '--query.timeout=1m'
+      - '--log.level=info'
+
+- name: Reload prometheus configuration
+  when:
+    - setup_prometheus | default(false) | bool == False
+    - prometheus_container.exists == True
+  uri:
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'prometheus_server' ] }}/-/reload"
+    method: POST
+    status_code: 200
+
+- name: "Wait for prometheus #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'prometheus_server' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+- name: "Wait for prometheus #2"
+  retries: 8
+  delay: 15
+  register: result
+  until: result is succeeded
+  uri:
+    timeout: 120
+    url: http://{{ inventory_hostname }}:{{ port_definition[ 'prometheus_server' ] }}/status

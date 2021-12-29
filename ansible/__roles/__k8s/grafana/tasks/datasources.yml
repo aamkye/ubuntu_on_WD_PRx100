@@ -1,0 +1,56 @@
+- name: Add prometheus to grafana
+  loop:
+    - home
+  uri:
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'grafana_server' ] }}/api/datasources"
+    method: POST
+    user: root
+    password: "{{ user_password }}"
+    body:
+      name: "prometheus-{{ item }}"
+      type: "prometheus"
+      url: "http://prometheus.{{ item }}.localhost:{{ port_definition[ 'prometheus_server' ] }}"
+      access: "proxy"
+    force_basic_auth: yes
+    status_code: 200, 409
+    body_format: json
+
+- name: Add prometheus delta cached (trickster) to grafana
+  loop:
+    - home
+  uri:
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'grafana_server' ] }}/api/datasources"
+    method: POST
+    user: root
+    password: "{{ user_password }}"
+    body:
+      name: "prometheus-cached-{{ item }}"
+      type: "prometheus"
+      url: "http://prometheus.{{ item }}.localhost:{{ port_definition[ 'trickster' ] }}"
+      access: "proxy"
+    force_basic_auth: yes
+    status_code: 200, 409
+    body_format: json
+
+- name: Add thanos to grafana
+  loop:
+    - {name: thanos, port: 10904, customQueryParameters: "max_source_resolution=1h&partial_response=true"}
+    - {name: thanos-cached, port: 8000, customQueryParameters: "max_source_resolution=1h&partial_response=true"}
+    - {name: thanos-cached-raw, port: 8000, customQueryParameters: "max_source_resolution=0"}
+    - {name: thanos-objectstorage-only, port: 10911, customQueryParameters: "max_source_resolution=1h&partial_response=true"}
+  uri:
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'grafana_server' ] }}/api/datasources"
+    method: POST
+    user: root
+    password: "{{ user_password }}"
+    body:
+      type: prometheus
+      name: "{{ item.name }}"
+      access: "proxy"
+      url: "http://thanos.nas.localhost:{{ item.port }}"
+      jsonData:
+        customQueryParameters: "{{ item.customQueryParameters }}"
+    force_basic_auth: yes
+    status_code: 200, 409
+    body_format: json
+

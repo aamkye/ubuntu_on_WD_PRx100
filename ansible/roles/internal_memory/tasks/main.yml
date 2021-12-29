@@ -6,4 +6,5 @@
 
 - name: Update initramfs
   become: true
-  shell: update-initramfs -u
+  ansible.builtin.shell: |
+    update-initramfs -u

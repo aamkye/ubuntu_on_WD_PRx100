@@ -1,0 +1,69 @@
+
+- name: Restart UFW to its defaults
+  ufw:
+    state: reset
+
+# Public
+- name: Allow access from internet to public ports
+  ufw:
+    rule: allow
+    src: "{{ item.0 }}"
+    port: "{{ item.1.split(\"/\")[0] }}"
+    proto: "{{ item.1.split(\"/\")[1] }}"
+  loop: |
+    {{
+      web_ip |
+        product(
+          security_groups[
+            security_group_name |
+              default('default')
+          ].public
+        ) | list
+    }}
+
+# Restricted
+- name: Allow access from IP to restricted ports
+  ufw:
+    rule: allow
+    src: "{{ item.0 }}"
+    port: "{{ item.1.split(\"/\")[0] }}"
+    proto: "{{ item.1.split(\"/\")[1] }}"
+  loop: |
+    {{
+      (
+        whitelisted_ip +
+        web_ip | list
+      ) |
+      product(
+        security_groups[
+          security_group_name |
+            default('default')
+        ].restricted
+      ) | list
+    }}
+
+# Private
+- name: Allow access from inside to private ports
+  ufw:
+    rule: allow
+    src: "{{ item.0 }}"
+    port: "{{ item.1.split(\"/\")[0] }}"
+    proto: "{{ item.1.split(\"/\")[1] }}"
+  loop: |
+    {{
+      [
+        aws_network[network_name | default('main')].network_cidr,
+        aws_network[network_name | default('main')].tools['docker'].address ~
+        aws_network[network_name | default('main')].tools['docker'].cidr
+      ] |
+      product(
+        security_groups[
+          security_group_name |
+            default('default')
+        ].private
+      ) | list
+    }}
+
+- name: Reload UFW
+  ufw:
+    state: enabled

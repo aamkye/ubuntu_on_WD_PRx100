@@ -1,0 +1,104 @@
+alertmanager:
+  interval: 15s
+  servers:
+{% for instance in ['nas'] %}
+    - name: "prometheus-{{ instance }}"
+      uri: "http://prometheus.{{ instance }}.localhost:{{ port_definition[ 'prometheus_alertmanager' ] }}"
+      proxy: true
+      timeout: 20s
+{% endfor %}
+    - name: "thanos-globalview"
+      uri: "http://thanos.nas.localhost:{{ port_definition[ 'prometheus_alertmanager' ] }}"
+      proxy: true
+      timeout: 20s
+
+karma:
+  name: Karma
+
+ui:
+  refresh: 30s
+  hideFiltersWhenIdle: False
+  colorTitlebar: False
+  minimalGroupWidth: 500
+  alertsPerGroup: 5
+  collapseGroups: collapsedOnMobile
+  theme: dark
+  multiGridLabel: severity
+
+listen:
+  address: "0.0.0.0"
+  port: {{ port_definition[ 'prometheus_karma' ] }}
+  prefix: /
+
+receivers:
+  strip:
+    - opsgenie
+    - pagerduty
+
+labels:
+  color:
+    unique:
+      - "@alertmanager"
+      - "@receiver"
+      - "@cluster"
+      - alertname
+      - code
+      - env
+      - instance
+      - job
+      - level
+      - method
+      - origin
+      - path
+      - server
+      - service_name
+      - service_number
+      - stack
+      - status
+      - task_id
+      - type
+    custom:
+      severity:
+        - value: warning
+          color: "#264653"
+        - value: low
+          color: "#2a9d8f"
+        - value: medium
+          color: "#e9c46a"
+        - value: high
+          color: "#f4a261"
+        - value: critical
+          color: "#e76f51"
+  strip:
+    - host
+
+annotations:
+  strip:
+    - identifier
+
+grid:
+  sorting:
+    order: label
+    reverse: false
+    label: severity
+    customValues:
+      labels:
+        severity:
+          critical: 1
+          high: 2
+          medium: 3
+          low: 4
+          warning: 5
+
+alertAcknowledgement:
+  enabled: True
+  duration: 20m0s
+  author: Karma
+  commentPrefix: Someone is fixing it.
+
+silences:
+  comments:
+    linkDetect:
+      rules:
+        - regex: "((T)-[0-9]+)"
+          uriTemplate: https://jira.nas.localhost/browse/$1

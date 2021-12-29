@@ -1,0 +1,46 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Stop trickster
+  docker_container:
+    name: prometheus-trickster
+    state: absent
+
+- name: Run trickster
+  docker_container:
+    image: "tricksterproxy/trickster:{{ trickster_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: trickster
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'trickster' ] }}:{{ port_definition[ 'trickster' ] }}"
+      - "0.0.0.0:{{ port_definition[ 'trickster_exporter' ] }}:{{ port_definition[ 'trickster_exporter' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - "-origin-url http://{{ inventory_hostname }}:{{ target_port | default(port_definition[ 'prometheus_server' ]) }}"
+      - "-origin-type prometheus"
+      - "-proxy-port {{ port_definition[ 'trickster' ] }}"
+      - "-metrics-port {{ port_definition[ 'trickster_exporter' ] }}"
+      - "-log-level INFO"
+
+- name: "Wait for trickster #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'trickster' ] }}"
+    delay: 5
+    sleep: 3
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+- name: "Wait for trickster #2"
+  uri:
+    timeout: 120
+    url: http://{{ inventory_hostname }}:{{ port_definition[ 'trickster' ] }}/

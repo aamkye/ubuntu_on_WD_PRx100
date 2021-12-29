@@ -1,0 +1,82 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Run thanos query
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-query
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_query_grpc' ] }}:{{ port_definition[ 'thanos_query_grpc' ] }}"
+      - "0.0.0.0:{{ port_definition[ 'thanos_query_http' ] }}:{{ port_definition[ 'thanos_query_http' ] }}"
+    pull: true
+    recreate: true
+    force_kill: true
+    command:
+      - 'query'
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_query_http' ] }}"
+      - "--grpc-address=0.0.0.0:{{ port_definition[ 'thanos_query_grpc' ] }}"
+
+      - "--store=dns+prometheus.nas.localhost:{{ port_definition[ 'thanos_sidecar_grpc' ] }}"
+
+      - "--store=dns+thanos.nas.localhost:{{ port_definition[ 'thanos_store_grpc' ] }}"
+
+      - '--query.replica-label=origin'
+      - '--query.timeout=30s'
+      - '--store.response-timeout=30s'
+      - '--query.max-concurrent=12'
+      - '--query.partial-response'
+      - '--log.level=info'
+
+- name: Run thanos query store-only
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-query-store-only
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_query_grpc_secondary' ] }}:{{ port_definition[ 'thanos_query_grpc' ] }}"
+      - "0.0.0.0:{{ port_definition[ 'thanos_query_http_secondary' ] }}:{{ port_definition[ 'thanos_query_http' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - 'query'
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_query_http' ] }}"
+      - "--grpc-address=0.0.0.0:{{ port_definition[ 'thanos_query_grpc' ] }}"
+      - "--store=dns+thanos.nas.localhost:{{ port_definition[ 'thanos_store_grpc' ] }}"
+
+      - '--query.replica-label=origin'
+      - '--query.timeout=30s'
+      - '--store.response-timeout=15s'
+      - '--query.max-concurrent=8'
+      - '--query.partial-response'
+      - '--log.level=info'
+
+- name: "Wait for thanos query #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'thanos_query_http' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+- name: "Wait for thanos query #2"
+  retries: 8
+  delay: 15
+  register: result
+  until: result is succeeded
+  uri:
+    timeout: 120
+    url: http://{{ inventory_hostname }}:{{ port_definition[ 'thanos_query_http' ] }}/

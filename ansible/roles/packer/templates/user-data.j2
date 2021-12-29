@@ -54,4 +54,5 @@ autoinstall:
   late-commands:
     - echo '{{ username }} ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/{{ username }}
     - chmod 440 /target/etc/sudoers.d/{{ username }}
+    - ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 

@@ -15,7 +15,7 @@
 
 - name: Setup ZFS dataset with encryption
   become: true
-  shell: >-
+  ansible.builtin.shell: >-
     zfs create
     {{ '-o' if item['options'] else '' }} {{ item['options'] | join(' -o ') }}
     {{ item['name'] }}
@@ -42,7 +42,7 @@
 
 - name: Remove ZFS dataset
   become: true
-  shell: |
+  ansible.builtin.shell: |
     zfs unmount -f {{ item['name'] }}
     zfs destroy -f {{ item['name'] }}
   when:

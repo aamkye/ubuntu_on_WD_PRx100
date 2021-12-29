@@ -1,0 +1,46 @@
+groups:
+  - name: Prometheus
+    rules:
+      - alert: Prometheus configuration reload failed
+        expr: |
+          (
+            sum(
+              label_replace(
+                prometheus_config_last_reload_successful,
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) != 1
+        for: 0s
+        labels:
+          severity: high
+          type: prometheus
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'
+
+      - alert: Alertmanager configuration reload failed
+        expr: |
+          (
+            sum(
+              label_replace(
+                alertmanager_config_last_reload_successful,
+                "private_ip", "$1", "instance", "(.*):.*"
+              )
+            ) without (instance)
+          )
+          + on(private_ip) group_left(purpose)
+          (
+            0 * (up{job="nodes"} != 0)
+          ) != 1
+        for: 0s
+        labels:
+          severity: high
+          type: prometheus
+        annotations:
+          identifier: '{% raw %}{{ $labels.instance }}{% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'

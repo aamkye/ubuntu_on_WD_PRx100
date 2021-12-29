@@ -5,7 +5,7 @@
   args:
     chdir: "{{ tmp_dir }}"
     creates: "{{ tmp_dir }}/output/{{ packer_image_name }}"
-  shell:
+  ansible.builtin.shell: |
     packer build .
 
 - name: "Packer output"
