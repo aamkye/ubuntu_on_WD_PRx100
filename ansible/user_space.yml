@@ -4,5 +4,8 @@
     - vars/main.yml
     - vars/packer.yml
   roles:
-    - { role: bashrc }
-    - { role: user }
+    # - { role: user }
+    # - { role: apps }
+    # - { role: tor }
+    # - { role: pyenv }
+    - { role: yt_functions }

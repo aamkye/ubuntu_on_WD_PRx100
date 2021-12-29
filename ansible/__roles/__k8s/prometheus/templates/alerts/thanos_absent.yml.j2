@@ -1,0 +1,53 @@
+groups:
+  - name: Thanos component absent
+    rules:
+      - alert: Thanos compact is down
+        expr: |
+          absent(up{job=~"thanos-compact"} == 1)
+        for: 0s
+        labels:
+          severity: high
+          type: thanos/absent
+
+      - alert: Thanos query is down
+        expr: |
+          absent(up{job=~"thanos-query"} == 1)
+        for: 0s
+        labels:
+          severity: high
+          type: thanos/absent
+
+      # - alert: Thanos receiver is down
+      #   expr: |
+      #     absent(up{job=~"thanos-receiver"} == 1)
+      #   for: 0s
+      #   labels:
+      #     severity: high
+      #     type: thanos/absent
+      #   annotations:
+      #     # identifier:
+      #     # value: '{% raw %}{{ $value }}{% endraw %}'
+
+      - alert: Thanos rule is down
+        expr: |
+          absent(up{job=~"thanos-rule"} <= 1)
+        for: 0s
+        labels:
+          severity: high
+          type: thanos/absent
+
+      - alert: Thanos sidecar is down
+        expr: |
+          absent(up{job=~"thanos-sidecar"} <= 1)
+        for: 0s
+        labels:
+          severity: high
+          type: thanos/absent
+
+      - alert: Thanos store is down
+        expr: |
+          absent(up{job=~"thanos-store"} <= 1)
+        for: 0s
+        labels:
+          severity: high
+          type: thanos/absent

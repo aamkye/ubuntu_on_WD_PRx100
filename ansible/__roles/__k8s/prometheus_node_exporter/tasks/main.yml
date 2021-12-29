@@ -1,0 +1,57 @@
+- include_role:
+    name: setup_prometheus_node_exporter
+    tasks_from: remove_system_service
+
+- include_role:
+    name: setup_prometheus_node_exporter
+    tasks_from: textfile_collector
+
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Docker run node-exporter
+  become: True
+  docker_container:
+    image: "quay.io/prometheus/node-exporter:{{ prometheus_node_exporter_version }}"
+    hostname: "{{ ansible_nodename }}"
+    name: node-exporter
+    state: started
+    restart_policy: unless-stopped
+    pull: true
+    recreate: true
+    pid_mode: 'host'
+    network_mode: 'host'
+    capabilities:
+      - sys_time
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'prometheus_node_exporter' ] }}:{{ port_definition[ 'prometheus_node_exporter' ] }}"
+    volumes:
+      - "/:/host:ro,rslave"
+    command:
+      - "--path.rootfs=/host {% for prometheus_node_exporter_collector in prometheus_node_exporter_enabled_collectors %}--collector.{{ prometheus_node_exporter_collector }} {% endfor %} {% for flag, flag_value in prometheus_node_exporter_config_flags.items() %}--{{ flag }}={{ flag_value }} {% endfor %}"
+
+- name: "Wait for node-exporter exporter #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'prometheus_node_exporter' ] }}"
+    delay: 5
+    sleep: 3
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+  when:
+    - use_public | default(false) | bool == False
+    - ec2_network | default(subnet_name | default(settings[ 'all' ][ 'instance' ][ 'subnet_name' ]) ) == 'private'
+
+- name: "Wait for node-exporter exporter #2"
+  uri:
+    timeout: 120
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'prometheus_node_exporter' ] }}/metrics"
+  when:
+    - use_public | default(false) | bool == False
+    - ec2_network | default(subnet_name | default(settings[ 'all' ][ 'instance' ][ 'subnet_name' ]) ) == 'private'

@@ -1,0 +1,63 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Create thanos rule folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+    owner: quaak
+    group: quaak
+  loop:
+    - /opt/thanos/compact/data/
+
+- name: Run thanos compact
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-compact
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "/opt/thanos:/opt/thanos"
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_compact_http' ] }}:{{ port_definition[ 'thanos_compact_http' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - 'compact'
+      - '--data-dir=/opt/thanos/compact/data'
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_compact_http' ] }}"
+      - '--objstore.config-file=/opt/thanos/store/config/store.yml'
+      - '--retention.resolution-raw=1y'
+      - '--retention.resolution-5m=2y'
+      - '--retention.resolution-1h=0d'
+      - '--wait'
+      - '--compact.concurrency=1'
+      - '--log.level=info'
+
+- name: "Wait for thanos compact #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'thanos_compact_http' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+# - name: "Wait for thanos compact #2"
+#   retries: 8
+#   delay: 15
+#   register: result
+#   until: result is succeeded
+#   uri:
+#     timeout: 120
+#     url: http://{{ inventory_hostname }}:{{ port_definition[ 'thanos_compact_http' ] }}/

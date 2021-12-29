@@ -3,3 +3,15 @@
   package:
     name: zfsutils-linux
     state: present
+
+- name: Add aliases to bashrc
+  ansible.builtin.blockinfile:
+    path: ~/.bashrc
+    marker: "# zfs {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      function zload() {
+        sudo zfs load-key -L prompt $1 && sudo zfs mount $1
+      }
+      function zunload() {
+        sudo zfs unmount -f $1 && sudo zfs unload-key $1
+      }

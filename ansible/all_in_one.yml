@@ -1,15 +1,13 @@
 - name: All in one playbook
-  hosts: "{{ target | default('None') }}"
+  hosts: "{{ target | default('nas') }}"
   vars_files:
     - vars/docker.yml
     - vars/main.yml
     - vars/packer.yml
     - vars/zfs.yml
   roles:
+    - { role: localhost_dns, when: (custom_dns | default(false) | bool) == true}
     - { role: hardware_control }
     - { role: internal_memory }
-
-    - { role: bashrc }
     - { role: user }
-
     - { role: docker }

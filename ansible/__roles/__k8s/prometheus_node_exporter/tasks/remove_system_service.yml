@@ -1,0 +1,21 @@
+- name: Ensure prometheus node exporter service is stopped
+  service:
+    name: prometheus-node-exporter
+    state: stopped
+  ignore_errors: yes
+
+- name: Ensure prometheus node exporter service is disabled
+  service:
+    name: prometheus-node-exporter
+    enabled: false
+  ignore_errors: yes
+
+- name: Remove systemd service unit
+  become: True
+  file:
+    dest: /etc/systemd/system/prometheus-node-exporter.service
+    state: absent
+
+- name: Just force systemd to reread configs
+  systemd:
+    daemon_reload: yes

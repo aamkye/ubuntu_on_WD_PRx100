@@ -1,0 +1,12 @@
+- name: Create rules prometheus folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/prometheus/rules
+
+- name: Copy prometheus rules config (preaggregation rules)
+  template:
+    src: rules/rules.yml.j2
+    dest: /opt/prometheus/rules/rules.yml

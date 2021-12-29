@@ -17,6 +17,6 @@
 
 - name: Install wdnas-hwtools
   become: true
-  shell:
+  ansible.builtin.shell:
     cmd: ./install.sh
     chdir: /opt/wdnas-hwtools

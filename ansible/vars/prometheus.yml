@@ -1,0 +1,12 @@
+# https://github.com/prometheus/node_exporter#enabled-by-default
+prometheus_node_exporter_enabled_collectors:
+  - buddyinfo
+  - ksmd
+  - ntp
+  - processes
+  - systemd
+
+prometheus_node_exporter_config_flags:
+  web.listen-address: "0.0.0.0:{{ port_definition['prometheus_node_exporter'] }}"
+  collector.textfile.directory: /host/opt/prometheus/textfile_collector
+  log.level: info

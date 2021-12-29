@@ -6,7 +6,7 @@
 
 - name: Create ZFS pool
   become: true
-  shell: >-
+  ansible.builtin.shell: >-
     zpool create
     {{ '-o' if item['options'] else '' }} {{ item['options'] | join(' -o ') }}
     {{ item['name'] }}
@@ -19,7 +19,7 @@
 
 - name: Import existing pool
   become: true
-  shell: |
+  ansible.builtin.shell: |
     zpool import -f $(zpool import | grep "id:" | awk -F': ' '{print $2}')
   when:
     - item['state'] | default('present') == 'present'

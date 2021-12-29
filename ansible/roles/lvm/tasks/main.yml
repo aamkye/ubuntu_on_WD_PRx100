@@ -9,7 +9,7 @@
 
 - name: Extend filesystem to fill all available space
   become: true
-  shell: |
+  ansible.builtin.shell: |
     pvresize {{ usb_drive }}{{ usb_drive_partition }}
     lvresize -l +100%FREE $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')
     resize2fs $(sudo lvdisplay -c | awk -F':' '{print $1}' | tr -d ' ')

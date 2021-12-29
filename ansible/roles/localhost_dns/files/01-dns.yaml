@@ -1,0 +1,7 @@
+network:
+  version: 2
+  renderer: networkd
+  bonds:
+    bond0:
+      nameservers:
+        addresses: [10.255.0.1, 1.1.1.1, 1.0.0.1]

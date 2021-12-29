@@ -1,0 +1,251 @@
+groups:
+  - name: Node exporter
+    rules:
+{% for alert in [
+  {'duration':'0s', 'value':'0', 'severity':'high'},
+  {'duration':'10m', 'value':'0', 'severity':'critical'},
+]%}
+      - alert: Instance down
+        expr: |
+          sum(
+            up{job=~"nodes", purpose!="AUTO_JENKINS_SLAVE"}
+          ) by (private_ip, purpose, env, job) == {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          #value: '{% raw %}{{ $value | printf "%.2f" }}{% endraw %}'
+{% endfor %}
+
+{% for alert in [
+  {'duration':'2m', 'value':'0.95', 'severity':'medium'},
+  {'duration':'10m', 'value':'0.95', 'severity':'high'},
+]%}
+      - alert: High RAM usage
+        expr: |
+          sum(
+            node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes
+          ) by (private_ip, purpose, env, job) /
+          sum(
+            node_memory_MemTotal_bytes
+          ) by (private_ip, purpose, env, job) > {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+{% endfor %}
+
+{% for alert in [
+  {'duration':'10m', 'value':'14400', 'severity':'high'},
+]%}
+      - alert: Disk predicts to fill up soon
+        expr: |
+          {{ alert.value }} - {{ alert.value }} /
+          (
+            sum(node_filesystem_avail_bytes{purpose!~".*JENKINS.*"}) by (private_ip, purpose, env, job) /
+            abs(
+              sum(
+                predict_linear(
+                  node_filesystem_avail_bytes{purpose!~".*JENKINS.*"}[1h], {{ alert.value }}
+                )
+              ) by (private_ip, purpose, env, job) < 0
+            )
+          )
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'
+{% endfor %}
+
+{% for alert in [
+  {'duration':'10m', 'value':'0.75', 'severity':'warning'},
+  {'duration':'10m', 'value':'0.85', 'severity':'critical'},
+]%}
+      - alert: Disk is filling up
+        expr: |
+          sum(
+            node_filesystem_size_bytes{purpose!~".*JENKINS.*"} -
+            node_filesystem_avail_bytes{purpose!~".*JENKINS.*"}
+          ) by (private_ip, purpose, device, job) /
+          sum(
+            node_filesystem_size_bytes{purpose!~".*JENKINS.*"}
+          ) by (private_ip, purpose, device, job) > {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+{% endfor %}
+
+{% for alert in [
+  {'duration':'10m', 'value':'0.95', 'severity':'medium'},
+  {'duration':'2h', 'value':'0.90', 'severity':'high'}
+]%}
+      - alert: High CPU usage
+        expr: |
+          1 - avg(
+            rate(
+              node_cpu_seconds_total{mode='idle'}[1m]
+            )
+          ) by (private_ip, purpose, env, job) > {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+{% endfor %}
+
+{% for alert in [
+  {'duration':'5m', 'value':'2', 'severity':'medium'},
+  {'duration':'1h', 'value':'2', 'severity':'high'}
+]%}
+      - alert: High CPU/load ratio
+        expr: |
+          sum(
+            node_load1{}
+          ) by (private_ip, purpose, env, job) /
+          count(
+            node_cpu_seconds_total{mode=~"idle"}
+          ) by (private_ip, purpose, env, job) > {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | printf "%.2f" }}{% endraw %}'
+{% endfor %}
+
+{% for alert in [
+  {'duration':'5m', 'value':'0.33', 'severity':'medium'},
+  {'duration':'1h', 'value':'0.5', 'severity':'high'},
+]%}
+      - alert: High amount of blocked proccesses
+        expr: |
+          sum(
+            node_procs_blocked{}
+          ) by (private_ip, purpose, env, job) /
+          sum(
+            node_procs_running{} +
+            node_procs_blocked{}
+          ) by (private_ip, purpose, env, job) > {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+{% endfor %}
+
+{% for name in ["receive", "transmit"] %}
+      - alert: High network {{ name }}
+        expr: |
+          sum(
+            irate(
+              node_network_{{ name }}_bytes_total[2m]
+            )
+          ) by (private_ip, purpose, env, job) > 10485760
+        for: 0s
+        labels:
+          severity: warning
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanize }}B/s{% endraw %}'
+
+{% endfor %}
+{% for name in ["read", "write"] %}
+      - alert: High disk {{ name }} rate
+        expr: |
+          sum(
+            irate(
+              node_disk_{{ name }}_bytes_total[2m]
+            )
+          ) by (private_ip, purpose, env, job) > 26214400
+        for: 0s
+        labels:
+          severity: warning
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanize }}B/s{% endraw %}'
+
+{% endfor %}
+{% for name in ["read", "write"] %}
+      - alert: High disk {{ name }} latency
+        expr: |
+          sum(
+            rate(
+              node_disk_{{ name }}_time_seconds_total[1m]
+            ) /
+            rate(
+              node_disk_{{ name }}s_completed_total[1m]
+            )
+          ) by (private_ip, purpose, env, job) > 1
+        for: 0s
+        labels:
+          severity: warning
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizeDuration }}{% endraw %}'
+
+{% endfor %}
+      - alert: High amount of used inodes
+        expr: |
+          1 - sum(
+            node_filesystem_files_free{mountpoint ="/"} /
+            node_filesystem_files{mountpoint ="/"}
+          ) by (private_ip, purpose, env, job) > 0.9
+        for: 0s
+        labels:
+          severity: warning
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+      - alert: Swap is filling up
+        expr: |
+          1 - sum(
+            node_memory_SwapFree_bytes /
+            node_memory_SwapTotal_bytes
+          ) by (private_ip, purpose, env, job) > 0.50
+        for: 0s
+        labels:
+          severity: warning
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.private_ip }} ({{ $labels.purpose }}){% endraw %}'
+          value: '{% raw %}{{ $value | humanizePercentage }}{% endraw %}'
+
+{% for alert in [
+  {'duration':'5m', 'value':'0', 'severity':'high', 'note':'No'},
+  {'duration':'15m', 'value':'0', 'severity':'critical', 'note':'No'},
+]%}
+      - alert: {{ alert.note }} workers in swarm pool
+        expr: |
+          sum(
+            up{purpose=~"(SWARM)_([A-Z]*)_([A-Z]*)_(WORKER).*", job=~"nodes"}
+          ) by (purpose, env, job) <= {{ alert.value }}
+        for: {{ alert.duration }}
+        labels:
+          severity: {{ alert.severity }}
+          type: aws/ec2
+        annotations:
+          identifier: '{% raw %}{{ $labels.purpose }}{% endraw %}'
+          value: '{% raw %}{{ $value | printf "%.2f" }}{% endraw %}'
+{% endfor %}

@@ -1,0 +1,49 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Run thanos store
+  become: True
+  docker_container:
+    image: "thanosio/thanos:{{ thanos_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: thanos-store
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "/opt/thanos:/opt/thanos"
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'thanos_store_grpc' ] }}:{{ port_definition[ 'thanos_store_grpc' ] }}"
+      - "0.0.0.0:{{ port_definition[ 'thanos_store_http' ] }}:{{ port_definition[ 'thanos_store_http' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - 'store'
+      - '--data-dir=/opt/thanos/store/data/'
+      - "--http-address=0.0.0.0:{{ port_definition[ 'thanos_store_http' ] }}"
+      - "--grpc-address=0.0.0.0:{{ port_definition[ 'thanos_store_grpc' ] }}"
+      - '--objstore.config-file=/opt/thanos/store/config/store.yml'
+      - '--log.level=info'
+
+- name: "Wait for thanos store #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'thanos_store_http' ] }}"
+    delay: 5
+    sleep: 30
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+# - name: "Wait for thanos store #2"
+#   retries: 8
+#   delay: 15
+#   register: result
+#   until: result is succeeded
+#   uri:
+#     timeout: 120
+#     url: http://{{ inventory_hostname }}:{{ port_definition[ 'thanos_store_http' ] }}/

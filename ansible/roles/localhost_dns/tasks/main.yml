@@ -1,0 +1,23 @@
+- name: Add netplan dns config
+  become: true
+  ansible.builtin.copy:
+    src: 01-dns.yaml
+    dest: "/etc/netplan"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create a symbolic link
+  become: true
+  ansible.builtin.file:
+    src:  /run/systemd/resolve/resolv.conf
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    state: link
+    force: true
+
+- name: Start netplan
+  become: true
+  ansible.builtin.shell: |
+    netplan apply

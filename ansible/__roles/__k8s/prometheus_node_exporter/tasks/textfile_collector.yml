@@ -1,0 +1,32 @@
+- name: Create config prometheus folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/prometheus/textfile_collector
+
+- name: Place scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/opt/prometheus/textfile_collector/{{ item }}"
+  loop:
+    - apt.py
+
+- name: Installing packages
+  retries: 2
+  delay: 3
+  register: result
+  until: result is succeeded
+  ignore_errors: yes
+  package:
+    name: "{{ item.name }}"
+    state: latest
+  loop:
+    - {name: 'moreutils'}
+
+- name: Add scripts to cron
+  become: True
+  cron:
+    name: "Check updates"
+    job: "/opt/prometheus/textfile_collector/apt.py | sponge /opt/prometheus/textfile_collector/apt.prom"

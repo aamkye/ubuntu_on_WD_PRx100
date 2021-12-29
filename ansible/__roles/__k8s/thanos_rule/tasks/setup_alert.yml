@@ -1,0 +1,13 @@
+- name: Create thanos rule folder
+  become: True
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/thanos/rule/alerts/
+
+- name: Copy thanos alerts config
+  template:
+    src: "alerts/{{ item }}.j2"
+    dest: "/opt/thanos/rule/alerts/{{ item }}"
+  loop: []

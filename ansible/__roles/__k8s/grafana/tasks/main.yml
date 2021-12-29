@@ -1,0 +1,102 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Checking grafana directory
+  become: True
+  file:
+    path: /opt/grafana/data
+    state: directory
+
+- name: Docker run grafana-renderer
+  docker_container:
+    image: "grafana/grafana-image-renderer:{{ grafana_image_renderer_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: grafana-renderer
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'grafana_renderer' ] }}:{{ port_definition[ 'grafana_renderer' ] }}"
+    pull: true
+    recreate: true
+    env:
+      IGNORE_HTTPS_ERRORS: 'true'
+      ENABLE_METRICS: 'true'
+    #   RENDERING_ARGS: --no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-accelerated-2d-canvas,--disable-gpu,--window-size=1280x720
+
+- name: Docker run grafana
+  docker_container:
+    image: "grafana/grafana:{{ grafana_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: grafana
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'grafana_server' ] }}:{{ port_definition[ 'grafana_server' ] }}"
+    pull: true
+    recreate: true
+    env:
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,neocat-cal-heatmap-panel
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_AUTH_ANONYMOUS_ORG_NAME: 'AK95'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: 'Viewer'
+      GF_SECURITY_ADMIN_USER: root
+      GF_SECURITY_ADMIN_PASSWORD: "{{ user_password }}"
+      GF_SERVER_DOMAIN: grafana.nas.localhost
+      GF_SERVER_ENABLE_GZIP: 'true'
+      GF_RENDERING_SERVER_URL: "http://{{ inventory_hostname }}:8081/render"
+      GF_RENDERING_CALLBACK_URL: "renderer.nas.localhost"
+    volumes:
+      - /opt/grafana/data:/var/lib/grafana
+
+- name: "Wait for grafana #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'grafana_server' ] }}"
+    delay: 5
+    sleep: 5
+    timeout: 60
+    active_connection_states:
+    - ESTABLISHED
+
+- name: Rename organisation
+  uri:
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'grafana_server' ] }}/api/orgs/1"
+    method: PUT
+    user: root
+    password: "{{ user_password }}"
+    body:
+      name: "AK95"
+    force_basic_auth: yes
+    status_code: 200
+    body_format: json
+
+- include_role:
+    name: setup_grafana
+    tasks_from: datasources.yml
+
+- name: Reload grafana config
+  docker_container:
+    name: grafana
+    state: stopped
+    force_kill: True
+    kill_signal: HUP
+
+- name: "Wait for grafana #2"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'grafana_server' ] }}"
+    delay: 5
+    sleep: 5
+    timeout: 60
+    active_connection_states:
+    - ESTABLISHED
+
+- name: "Wait for grafana #3"
+  uri:
+    timeout: 120
+    url: http://{{ inventory_hostname }}:{{ port_definition[ 'grafana_server' ] }}/

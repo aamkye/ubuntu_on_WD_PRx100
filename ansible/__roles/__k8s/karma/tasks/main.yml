@@ -1,0 +1,50 @@
+- name: Install deps
+  become: True
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-docker
+
+- name: Create root karma folder
+  become: True
+  file:
+    path: /opt/karma/
+    state: directory
+
+- name: Copy karma config
+  template:
+    src: config.yml.j2
+    dest: /opt/karma/config.yml
+    mode: 0644
+
+- name: Run karma
+  docker_container:
+    image: "lmierzwa/karma:{{ karma_version }}"
+    hostname: "{{ inventory_hostname }}"
+    name: karma
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "/opt/karma:/karmaui"
+    ports:
+      - "0.0.0.0:{{ port_definition[ 'prometheus_karma' ] }}:{{ port_definition[ 'prometheus_karma' ] }}"
+    pull: true
+    recreate: true
+    command:
+      - '--config.file /karmaui/config.yml'
+
+- name: "Wait for karma #1"
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ port_definition[ 'prometheus_karma' ] }}"
+    delay: 5
+    sleep: 3
+    timeout: 1200
+    active_connection_states:
+      - ESTABLISHED
+
+- name: "Wait for karma #2"
+  uri:
+    timeout: 120
+    url: "http://{{ inventory_hostname }}:{{ port_definition[ 'prometheus_karma' ] }}/"

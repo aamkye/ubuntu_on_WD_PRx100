@@ -1,0 +1,105 @@
+web_ip:
+  - 0.0.0.0/0
+
+whitelisted_ip:
+  - !vault |
+    $ANSIBLE_VAULT;1.2;AES256;id
+    39343232626563353130616163623766643539376238316537343164626332323436616230623335
+    3530653238613336333536663033343063363734646531350a393634383665393563393261313333
+    33323163353439383630616433623035336438353330393132653536363234376664343561373631
+    6539633638626430360a323038313931326539323762323337326530363961643063366339306135
+    6532
+
+port_definition:
+  ssh: 22
+
+  # https://github.com/prometheus/prometheus/wiki/Default-port-allocations
+  prometheus_alertmanager: 9093
+  prometheus_alertmanager_peer: 9094
+  prometheus_blackbox_exporter: 9115
+  prometheus_cadvisor_exporter: 9338
+  prometheus_cloudwatch_exporter: 9106
+  prometheus_cloudwatch_eu_west_1_exporter: 9106
+  prometheus_cloudwatch_us_east_1_exporter: 9107
+  prometheus_docker_engine_exporter: 9323
+  prometheus_ecr_exporter: 9606
+  prometheus_haproxy_exporter: 8404
+  prometheus_haproxy_stats: 8404
+  prometheus_karma: 8080
+  prometheus_node_exporter: 9100
+  prometheus_openvpn_exporter: 9176
+  prometheus_postgres_exporter: 9187
+  prometheus_pushgateway_exporter: 9091
+  prometheus_server: 9090
+  trickster_exporter: 8001
+  trickster: 8000
+
+  thanos_sidecar_grpc: 10901
+  thanos_sidecar_http: 10902
+  thanos_query_grpc: 10903
+  thanos_query_http: 10904
+  thanos_store_grpc: 10905
+  thanos_store_http: 10906
+  thanos_receive_grpc_store_api: 10907
+  thanos_receive_http_remote_write_api: 10908
+  thanos_receive_http: 10909
+  thanos_rule_grpc: 10910
+  thanos_rule_http: 10911
+  thanos_compact_http: 10912
+  thanos_bucket_web_http: 10920
+
+  grafana_server: 3000
+  grafana_renderer: 8081
+
+security_groups:
+  default:
+    public: []
+    restricted: []
+    private:
+      - "{{ port_definition['ssh'] }}/tcp"
+
+      - "{{ port_definition['prometheus_alertmanager'] }}/tcp"
+      - "{{ port_definition['prometheus_alertmanager_peer'] }}/tcp"
+      - "{{ port_definition['prometheus_blackbox_exporter'] }}/tcp"
+      - "{{ port_definition['prometheus_cadvisor_exporter'] }}/tcp"
+      - "{{ port_definition['prometheus_node_exporter'] }}/tcp"
+      - "{{ port_definition['prometheus_pushgateway_exporter'] }}/tcp"
+
+      - "{{ port_definition['prometheus_server'] }}/tcp"
+      - "{{ port_definition['thanos_sidecar_grpc'] }}/tcp"
+      - "{{ port_definition['thanos_sidecar_http'] }}/tcp"
+
+      - "{{ port_definition['trickster_exporter'] }}/tcp"
+      - "{{ port_definition['trickster'] }}/tcp"
+
+      - "{{ port_definition['thanos_query_grpc'] }}/tcp"
+      - "{{ port_definition['thanos_query_http'] }}/tcp"
+      - "{{ port_definition['thanos_store_grpc'] }}/tcp"
+      - "{{ port_definition['thanos_store_http'] }}/tcp"
+      - "{{ port_definition['thanos_receive_grpc_store_api'] }}/tcp"
+      - "{{ port_definition['thanos_receive_http_remote_write_api'] }}/tcp"
+      - "{{ port_definition['thanos_receive_http'] }}/tcp"
+      - "{{ port_definition['thanos_rule_grpc'] }}/tcp"
+      - "{{ port_definition['thanos_rule_http'] }}/tcp"
+      - "{{ port_definition['thanos_compact_http'] }}/tcp"
+      - "{{ port_definition['thanos_bucket_web_http'] }}/tcp"
+
+      - "{{ port_definition['grafana_server'] }}/tcp"
+      - "{{ port_definition['grafana_renderer'] }}/tcp"
+
+network:
+  main:
+    network_cidr: 10.255.0.0/24
+    private:
+      address: 10.255.0.0
+      cidr: /24
+      netmask: 255.255.255.0
+    tools:
+      openvpn:
+        address: 10.255.255.0
+        cidr: /24
+        netmask: 255.255.255.0
+      docker:
+        address: 172.17.0.0
+        cidr: /16
+        netmask: 255.255.0.0
