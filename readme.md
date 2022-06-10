@@ -42,6 +42,7 @@ It goes from preparation, downloading required packages, running installation, i
 
 The whole process can be accomplished on any linux-like system equipped with `KVM`.
 
+**HOWEVER** if Your are looking for something more extendable, serverish, and installable with classical way.. give a try [older brother - HPE ProLiant MicroServer GEN10](https://github.com/aamkye/ubuntu_on_HPE_ProLiant_MS_GEN10).
 
 ---
 
