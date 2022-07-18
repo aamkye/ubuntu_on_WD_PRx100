@@ -2,7 +2,7 @@
 
 _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix power._
 
-[![WD PR4100](https://icdn7.digitaltrends.com/image/anthonythurston-wd-pr4100-digitaltrends-883360-640x640.jpg?ver=1)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
+[![WD PR4100](./img/pr4100.jpeg)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
 
 ---
 
