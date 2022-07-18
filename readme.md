@@ -4,32 +4,6 @@ _Disclaimer: do this at your own risk. No fancy web gui here, just raw unix powe
 
 [![WD PR4100](https://icdn7.digitaltrends.com/image/anthonythurston-wd-pr4100-digitaltrends-883360-640x640.jpg?ver=1)](https://shop.westerndigital.com/products/network-attached-storage/wd-my-cloud-pro-series-pr4100)
 
-## TOC
-
-* [Setting up Ubuntu Server on WD PRx100](#setting-up-ubuntu-server-on-wd-prx100)
-  * [TOC](#toc)
-  * [Overview](#overview)
-  * [Ansible automation](#ansible-automation)
-  * [PR4100 Spec](#pr4100-spec)
-  * [Links:](#links)
-  * [Supported devices](#supported-devices)
-  * [Requirements](#requirements)
-  * [Preparation](#preparation)
-    * [Common](#common)
-    * [Ubuntu](#ubuntu)
-    * [MacOS (native M1 not supported)](#macos-native-m1-not-supported)
-  * [Download the Ubuntu Server](#download-the-ubuntu-server)
-  * [Main process](#main-process)
-  * [Post installation (while kvm is still running)](#post-installation-while-kvm-is-still-running)
-    * [Networking dynamic](#networking-dynamic)
-  * [Extras (meant to be run on NAS directly)](#extras-meant-to-be-run-on-nas-directly)
-    * [Hardware Control](#hardware-control)
-    * [Create a new ZFS array](#create-a-new-zfs-array)
-    * [ZFS native encryption](#zfs-native-encryption)
-    * [Disable internal flash memory](#disable-internal-flash-memory)
-  * [Hackish way to obtain MACADDRESSES](#hackish-way-to-obtain-macaddresses)
-  * [Remarks](#remarks)
-
 ---
 
 ## Overview
@@ -438,7 +412,185 @@ sudo update-initramfs -u
 
 For some reason default config renames `eno2` to `eth1` and tries to do the same with `eno1`, however our netplan config fixes that issue.
 
-## Remarks
+# Ansible
 
-* TOC created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc).
-* Linted by [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli)
+## Pre-requirements
+
+Browse `vars/` folder and do necessary changes like:
+  * `packer`:
+    * `macaddress`
+    * `authorized_keys`
+    * `hostname`
+    * `username`
+    * `password`
+  * `zfs`:
+    * `zfs_pools`
+    * `zfs_datasets`
+    * `zfs_dataset_pass`
+
+as well as:
+  * `ansible.cfg`:
+    * `remote_user`
+
+## Image building
+
+```bash
+ansible-playbook packer.yml --ask-become-pass
+```
+
+then wait 30-40min and image should create itself via packer in `ansible/tmp/output`
+
+## Image burn
+
+To burn image to `/dev/disk5` (`disk5` used as example), type:
+
+```bash
+cd tmp/output
+
+sudo su
+
+#as sudo
+pv -tpreb nas-ubuntu-server.img | dd of=/dev/disk5 bs=4096 conv=notrunc,noerror
+```
+
+## NAS Part
+
+Unplug USB from PC and plug into NAS (no matter which USB port).
+
+Now You need to localize NAS IP, run the same `nmap`:
+
+_NAS `bond0` interface should have `00:00:00:00:00:01` macaddress._
+
+```bash
+nmap -p 22 10.0.0.0/24
+
+(...)
+Nmap scan report for 10.0.0.101
+Host is up (0.012s latency).
+
+PORT   STATE SERVICE
+22/tcp open  ssh
+MAC Address: 00:00:00:00:00:01 (Xerox)
+(...)
+```
+
+If You can ssh to NAS - go to Ansible part.
+
+If not - debug time.
+
+## Ansible part
+
+Just run:
+
+```bash
+ansible-playbook all_in_one.yml --ask-become-pass -e "target=10.0.0.101" -i 10.0.0.101,
+```
+
+And watch the magic.
+
+After its done, it is done :)
+
+## Helpful stuff
+
+### Aliases
+
+```bash
+# Alias for loading password and mounting
+function zload() {
+  sudo zfs load-key -L prompt $1 && sudo zfs mount $1
+}
+
+# Alias for unloading password and unmounting
+function zunload() {
+  sudo zfs unmount -f $1 && sudo zfs unload-key $1
+}
+
+# Wipes whole zfs datasets and pools
+zfs destroy -r nas
+```
+
+### Manually converting qcow2 to img
+
+```bash
+qemu-img convert nas-ubuntu-server.qcow2 -O raw nas-ubuntu-server.img
+```
+
+### Existing ZFS pool
+
+It may happen that You already have old ZFS pool:
+
+```bash
+TASK [zfs : Create ZFS pool] ***************************************************
+fatal: [0.0.0.0]: FAILED! => changed=true
+  cmd: zpool create -o autoexpand=on -o autoreplace=on -o delegation=on -o dedupditto=1.5 -o failmode=continue -o listsnaps=on nas raidz2 /dev/sda /dev/sdb /dev/sdc /dev/sdd
+  msg: non-zero return code
+  rc: 1
+  stderr: |-
+    invalid vdev specification
+    use '-f' to override the following errors:
+    /dev/sda1 is part of potentially active pool 'nas'
+    /dev/sdb1 is part of potentially active pool 'nas'
+    /dev/sdc1 is part of potentially active pool 'nas'
+    /dev/sdd1 is part of potentially active pool 'nas'
+  stderr_lines: <omitted>
+  stdout: ''
+  stdout_lines: <omitted>
+```
+
+In that situation just type:
+
+```bash
+$ sudo zpool import
+   pool: nas
+     id: 0000000000000000000
+  state: ONLINE
+status: The pool was last accessed by another system.
+ action: The pool can be imported using its name or numeric identifier and
+        the '-f' flag.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-EY
+ config:
+
+        nas         ONLINE
+          raidz2-0  ONLINE
+            sda     ONLINE
+            sdb     ONLINE
+            sdc     ONLINE
+            sdd     ONLINE
+$ sudo zpool import -f 0000000000000000000
+$ zload nas/data
+```
+
+### Changing password for zfs dataset
+
+_Existing keys has to be loaded._
+
+```bash
+zfs change-key \
+  -o keylocation=prompt \
+  -o keyformat=passphrase \
+  nas/data
+```
+
+### Changing LVM size
+
+```
+* parted /dev/sde
+* print (fix if needed)
+* resizepart 3
+* <input size>
+* quit
+* pvresize /dev/sde3
+* lvextend -r -l100%free /dev/mapper/ubuntu--vg-ubuntu--lv
+```
+
+### Debug
+
+While You cannot connect to NAS, unplug USB from it, and plug back to PC. Go to tmp folder (BIOS is there), and run command (replace `disk5` with whatever suits your case):
+
+```bash
+sudo kvm -bios ./bios.bin -L . -drive format=raw,file=/dev/disk5 -m 4G
+```
+
+Log into system, and dive into logs.
+
+And that's it.
